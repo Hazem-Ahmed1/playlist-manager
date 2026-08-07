@@ -1,0 +1,3 @@
+/* Shared modal shell styles (.modal-app-dialog, .modal-icon, etc.) live in
+   src/styles.css since Angular scopes component styles and both LoginModal
+   and RegisterModal need the identical shell. Nothing login-specific yet. */

@@ -1,0 +1,11 @@
+/* Shared .error-page layout lives in src/styles.css; this only re-tints the accent for 403. */
+.forbidden-icon {
+  color: var(--danger-light);
+}
+
+.forbidden-code {
+  background: linear-gradient(135deg, var(--danger), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

@@ -1,0 +1,6 @@
+/* Shared modal shell styles (.modal-app-dialog, .modal-icon, etc.) live in
+   src/styles.css — see login-modal.css for the same note. */
+
+.modal-app-dialog {
+  max-width: 480px;
+}

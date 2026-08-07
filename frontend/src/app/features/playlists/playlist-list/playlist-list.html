@@ -1,0 +1,37 @@
+<div class="page-heading fade-in-up">
+  <p class="page-breadcrumb">My Playlists</p>
+  <h1>Your playlists</h1>
+  <p class="page-subtitle">Create, edit, and manage every playlist you own.</p>
+</div>
+
+<div class="content-row">
+  <div class="row">
+    <div class="col-12 col-lg-8 col-xl-6">
+      <app-playlist-section
+        [playlists]="playlists()"
+        (createPlaylist)="onCreatePlaylist()"
+        (openPlaylist)="onOpenPlaylist($event)"
+        (editPlaylist)="onEditPlaylist($event)"
+        (deletePlaylist)="onDeletePlaylist($event)"
+      />
+    </div>
+  </div>
+</div>
+
+@if (showPlaylistForm()) {
+  <app-playlist-form-modal
+    [playlist]="editingPlaylist()"
+    (closed)="showPlaylistForm.set(false)"
+    (saved)="onPlaylistSaved($event)"
+  />
+}
+
+@if (pendingDeletePlaylist(); as playlist) {
+  <app-confirm-modal
+    title="Delete playlist?"
+    [message]="'Delete \'' + playlist.name + '\'? This cannot be undone.'"
+    confirmLabel="Delete"
+    (confirmed)="confirmDeletePlaylist()"
+    (cancelled)="pendingDeletePlaylist.set(null)"
+  />
+}

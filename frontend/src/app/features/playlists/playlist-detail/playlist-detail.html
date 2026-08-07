@@ -1,0 +1,103 @@
+@if (isLoading()) {
+  <p class="loading-text">Loading playlist…</p>
+} @else if (playlist(); as current) {
+  <a routerLink="/playlists" class="back-link d-inline-flex align-items-center gap-2">
+    <i class="fa-solid fa-arrow-left"></i>
+    <span>Back to playlists</span>
+  </a>
+
+  <div class="page-heading-row fade-in-up content-row">
+    <div class="page-heading">
+      <p class="page-breadcrumb">My Playlists</p>
+      <h1>{{ current.name }}</h1>
+      @if (current.description) {
+        <p class="page-subtitle">{{ current.description }}</p>
+      }
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="btn-app-outline" (click)="showEditForm.set(true)">
+        <i class="fa-solid fa-pen"></i>
+        <span>Edit</span>
+      </button>
+      <button type="button" class="btn-app-outline danger-outline" (click)="showDeleteConfirm.set(true)">
+        <i class="fa-solid fa-trash"></i>
+        <span>Delete</span>
+      </button>
+      <button type="button" class="btn-app-primary" (click)="showSongPicker.set(true)">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Song</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="surface-card song-list-card content-row">
+    @if (current.songs.length === 0) {
+      <p class="empty-state">No songs yet — click "Add Song" to start building this playlist.</p>
+    } @else {
+      <ul class="playlist-song-list">
+        @for (song of current.songs; track song.songId) {
+          <li
+            class="playlist-song-row"
+            [class.active]="song.songId === playerState.currentSong()?.id"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Play ' + song.title"
+            (click)="playSong(song)"
+            (keydown.enter)="playSong(song)"
+          >
+            <span class="song-order">{{ song.order }}</span>
+            <div class="song-cover-sm">
+              <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="song-info text-truncate">
+              <p class="song-title text-truncate">{{ song.title }}</p>
+              <p class="song-artist text-truncate">{{ song.artist }}</p>
+            </div>
+            <span class="song-duration">{{ song.duration }}</span>
+            <button
+              type="button"
+              class="icon-btn danger"
+              [disabled]="removingSongId() === song.songId"
+              (click)="$event.stopPropagation(); removeSong(song.songId, song.title)"
+              [attr.aria-label]="'Remove ' + song.title"
+            >
+              @if (removingSongId() === song.songId) {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+              } @else {
+                <i class="fa-solid fa-xmark"></i>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (showSongPicker()) {
+    <app-song-picker-modal
+      [playlistId]="current.id"
+      [excludedSongIds]="excludedSongIds()"
+      (closed)="showSongPicker.set(false)"
+      (songAdded)="onSongAdded()"
+    />
+  }
+
+  @if (showEditForm()) {
+    <app-playlist-form-modal
+      [playlist]="current"
+      (closed)="showEditForm.set(false)"
+      (saved)="onPlaylistSaved()"
+    />
+  }
+
+  @if (showDeleteConfirm()) {
+    <app-confirm-modal
+      title="Delete playlist?"
+      [message]="'Delete \'' + current.name + '\'? This cannot be undone.'"
+      confirmLabel="Delete"
+      (confirmed)="confirmDeletePlaylist()"
+      (cancelled)="showDeleteConfirm.set(false)"
+    />
+  }
+}

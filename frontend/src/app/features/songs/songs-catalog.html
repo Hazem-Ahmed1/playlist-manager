@@ -1,0 +1,14 @@
+<div class="page-heading fade-in-up">
+  <p class="page-breadcrumb">All Songs</p>
+  <h1>Browse the catalog</h1>
+  <p class="page-subtitle">Every song available to add to your playlists.</p>
+</div>
+
+<div class="content-row">
+  <app-song-table
+    [songs]="songs()"
+    [isLoading]="isLoading()"
+    [activeSongId]="playerState.currentSong()?.id ?? null"
+    (songSelected)="onSongSelected($event)"
+  />
+</div>

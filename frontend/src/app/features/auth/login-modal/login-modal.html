@@ -1,0 +1,81 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
+  <div class="modal-app-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon">
+      <i class="fa-solid fa-right-to-bracket"></i>
+    </span>
+
+    <h2 id="login-modal-title">Welcome back</h2>
+    <p class="modal-subtitle">Sign in to manage your playlists and songs.</p>
+
+    <div class="demo-account-row d-flex gap-2">
+      <button type="button" class="btn-app-outline demo-btn" (click)="fillDemoAccount('user')">
+        <i class="fa-solid fa-user"></i>
+        <span>Fill demo user</span>
+      </button>
+      <button type="button" class="btn-app-outline demo-btn" (click)="fillDemoAccount('admin')">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Fill demo admin</span>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field-group">
+        <label class="field-label" for="login-email">Email</label>
+        <input
+          id="login-email"
+          type="email"
+          class="field-control"
+          formControlName="email"
+          placeholder="you@example.com"
+          [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <div class="field-feedback">
+            @if (form.controls.email.errors?.['required']) {
+              <span class="error">{{ messages.email.required }}</span>
+            } @else if (form.controls.email.errors?.['email']) {
+              <span class="error">{{ messages.email.invalid }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          class="field-control"
+          formControlName="password"
+          placeholder="••••••••"
+          [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+        />
+        @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
+          <div class="field-feedback">
+            <span class="error">{{ messages.password.required }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn-app-outline" (click)="close()">Cancel</button>
+        <button type="submit" class="btn-app-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          }
+          <span>Login</span>
+        </button>
+      </div>
+    </form>
+
+    <p class="modal-footer-text">
+      No account yet? <button type="button" class="link-btn" (click)="switchToRegister()">Register</button>
+    </p>
+  </div>
+</div>

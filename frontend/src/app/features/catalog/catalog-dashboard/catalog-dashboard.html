@@ -1,0 +1,83 @@
+<div class="page-heading-row fade-in-up">
+  <div class="page-heading">
+    <p class="page-breadcrumb">Catalog</p>
+    <h1>Manage songs</h1>
+    <p class="page-subtitle">Upload new tracks and remove ones that no longer belong.</p>
+  </div>
+
+  <button type="button" class="btn-app-primary" (click)="showUploadModal.set(true)">
+    <i class="fa-solid fa-cloud-arrow-up"></i>
+    <span>Upload Song</span>
+  </button>
+</div>
+
+<div class="surface-card catalog-table-card content-row">
+  @if (isLoading()) {
+    <p class="loading-text">Loading catalog…</p>
+  } @else if (songs().length === 0) {
+    <p class="empty-state">No songs yet — click "Upload Song" to add the first one.</p>
+  } @else {
+    <div class="table-responsive">
+      <table class="catalog-table">
+        <thead>
+          <tr>
+            <th scope="col">Song</th>
+            <th scope="col">Album</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Uploaded</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (song of songs(); track song.id) {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="catalog-cover">
+                    <i class="fa-solid fa-music"></i>
+                  </div>
+                  <div class="text-truncate">
+                    <p class="catalog-title text-truncate">{{ song.title }}</p>
+                    <p class="catalog-artist text-truncate">{{ song.artist }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="text-muted-cell">{{ song.album ?? '—' }}</td>
+              <td class="text-muted-cell">{{ song.duration }}</td>
+              <td class="text-muted-cell">{{ formattedDate(song.uploadedAt) }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  [disabled]="deletingSongId() === song.id"
+                  (click)="deleteSong(song)"
+                  [attr.aria-label]="'Delete ' + song.title"
+                >
+                  @if (deletingSongId() === song.id) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  } @else {
+                    <i class="fa-solid fa-trash"></i>
+                  }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (showUploadModal()) {
+  <app-upload-song-modal (closed)="showUploadModal.set(false)" (uploaded)="onSongUploaded($event)" />
+}
+
+@if (pendingDeleteSong(); as song) {
+  <app-confirm-modal
+    title="Delete song?"
+    [message]="'Delete \'' + song.title + '\'? This also removes the audio file. This cannot be undone.'"
+    confirmLabel="Delete"
+    (confirmed)="confirmDeleteSong()"
+    (cancelled)="pendingDeleteSong.set(null)"
+  />
+}

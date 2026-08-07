@@ -1,0 +1,160 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
+  <div class="modal-app-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon">
+      <i class="fa-solid fa-user-plus"></i>
+    </span>
+
+    <h2 id="register-modal-title">Create your account</h2>
+    <p class="modal-subtitle">Join to start building playlists and uploading songs.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="reg-first-name">First name</label>
+            <input
+              id="reg-first-name"
+              type="text"
+              class="field-control"
+              formControlName="firstName"
+              placeholder="Alex"
+              [class.is-invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
+            />
+            @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.firstName.errors?.['required']) {
+                  <span class="error">{{ messages.name.firstNameRequired }}</span>
+                } @else if (form.controls.firstName.errors?.['minlength'] || form.controls.firstName.errors?.['maxlength']) {
+                  <span class="error">{{ messages.name.firstNameLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="reg-last-name">Last name</label>
+            <input
+              id="reg-last-name"
+              type="text"
+              class="field-control"
+              formControlName="lastName"
+              placeholder="Rivera"
+              [class.is-invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
+            />
+            @if (form.controls.lastName.touched && form.controls.lastName.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.lastName.errors?.['required']) {
+                  <span class="error">{{ messages.name.lastNameRequired }}</span>
+                } @else if (form.controls.lastName.errors?.['minlength'] || form.controls.lastName.errors?.['maxlength']) {
+                  <span class="error">{{ messages.name.lastNameLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group mt-3">
+        <label class="field-label" for="reg-email">Email</label>
+        <input
+          id="reg-email"
+          type="email"
+          class="field-control"
+          formControlName="email"
+          placeholder="you@example.com"
+          [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <div class="field-feedback">
+            @if (form.controls.email.errors?.['required']) {
+              <span class="error">{{ messages.email.required }}</span>
+            } @else if (form.controls.email.errors?.['email']) {
+              <span class="error">{{ messages.email.invalid }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="reg-password">Password</label>
+        <input
+          id="reg-password"
+          type="password"
+          class="field-control"
+          formControlName="password"
+          placeholder="••••••••"
+          [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+        />
+        @if (form.controls.password.touched && form.controls.password.errors; as errors) {
+          <div class="field-feedback">
+            @if (errors['required']) {
+              <span class="error">{{ messages.password.required }}</span>
+            } @else {
+              @if (errors['minLength']) {
+                <span class="error">{{ messages.password.minLength }}</span>
+              }
+              @if (errors['uppercase']) {
+                <span class="error">{{ messages.password.uppercase }}</span>
+              }
+              @if (errors['lowercase']) {
+                <span class="error">{{ messages.password.lowercase }}</span>
+              }
+              @if (errors['digit']) {
+                <span class="error">{{ messages.password.digit }}</span>
+              }
+              @if (errors['specialChar']) {
+                <span class="error">{{ messages.password.specialChar }}</span>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="reg-confirm-password">Confirm password</label>
+        <input
+          id="reg-confirm-password"
+          type="password"
+          class="field-control"
+          formControlName="confirmPassword"
+          placeholder="••••••••"
+          [class.is-invalid]="
+            form.controls.confirmPassword.touched &&
+            (form.controls.confirmPassword.invalid || form.errors?.['passwordMismatch'])
+          "
+        />
+        @if (form.controls.confirmPassword.touched) {
+          <div class="field-feedback">
+            @if (form.controls.confirmPassword.errors?.['required']) {
+              <span class="error">{{ messages.confirmPassword.required }}</span>
+            } @else if (form.errors?.['passwordMismatch']) {
+              <span class="error">{{ messages.confirmPassword.mismatch }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn-app-outline" (click)="close()">Cancel</button>
+        <button type="submit" class="btn-app-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          }
+          <span>Create account</span>
+        </button>
+      </div>
+    </form>
+
+    <p class="modal-footer-text">
+      Already have an account? <button type="button" class="link-btn" (click)="switchToLogin()">Login</button>
+    </p>
+  </div>
+</div>

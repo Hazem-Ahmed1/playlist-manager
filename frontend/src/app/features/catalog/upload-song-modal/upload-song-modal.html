@@ -1,0 +1,133 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="upload-song-title">
+  <div class="modal-app-dialog upload-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon">
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+    </span>
+
+    <h2 id="upload-song-title">Upload song</h2>
+    <p class="modal-subtitle">Add a new track to the catalog. Admins only.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="song-title">Title</label>
+            <input
+              id="song-title"
+              type="text"
+              class="field-control"
+              formControlName="title"
+              placeholder="Song title"
+              [class.is-invalid]="form.controls.title.invalid && form.controls.title.touched"
+            />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.title.errors?.['required']) {
+                  <span class="error">{{ messages.titleRequired }}</span>
+                } @else if (form.controls.title.errors?.['maxlength']) {
+                  <span class="error">{{ messages.titleMaxLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="song-artist">Artist</label>
+            <input
+              id="song-artist"
+              type="text"
+              class="field-control"
+              formControlName="artist"
+              placeholder="Artist name"
+              [class.is-invalid]="form.controls.artist.invalid && form.controls.artist.touched"
+            />
+            @if (form.controls.artist.touched && form.controls.artist.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.artist.errors?.['required']) {
+                  <span class="error">{{ messages.artistRequired }}</span>
+                } @else if (form.controls.artist.errors?.['maxlength']) {
+                  <span class="error">{{ messages.artistMaxLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-0">
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="song-album">Album (optional)</label>
+            <input id="song-album" type="text" class="field-control" formControlName="album" placeholder="Album" />
+            @if (form.controls.album.touched && form.controls.album.errors?.['maxlength']) {
+              <div class="field-feedback">
+                <span class="error">{{ messages.albumMaxLength }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="song-genre">Genre (optional)</label>
+            <input id="song-genre" type="text" class="field-control" formControlName="genre" placeholder="Genre" />
+            @if (form.controls.genre.touched && form.controls.genre.errors?.['maxlength']) {
+              <div class="field-feedback">
+                <span class="error">{{ messages.genreMaxLength }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group mt-3">
+        <label class="field-label" for="song-duration">Duration (optional, mm:ss)</label>
+        <input id="song-duration" type="text" class="field-control" formControlName="duration" placeholder="3:45" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="song-file">Audio file</label>
+        <div class="file-picker d-flex align-items-center gap-2">
+          <label for="song-file" class="btn-app-outline file-picker-btn">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>Choose file</span>
+          </label>
+          <input id="song-file" type="file" class="visually-hidden" accept=".mp3,.wav,.m4a" (change)="onFileSelected($event)" />
+          <span class="file-picker-name text-truncate">{{ selectedFileName() ?? 'No file selected' }}</span>
+        </div>
+        <p class="file-hint">Allowed: {{ allowedExtensions }} · Max 20 MB</p>
+        @if (form.controls.file.touched && form.controls.file.invalid) {
+          <div class="field-feedback">
+            @if (form.controls.file.errors?.['required']) {
+              <span class="error">{{ messages.fileRequired }}</span>
+            }
+            @if (form.controls.file.errors?.['invalidExtension']) {
+              <span class="error">{{ messages.fileInvalidExtension }}</span>
+            }
+            @if (form.controls.file.errors?.['fileTooLarge']) {
+              <span class="error">{{ messages.fileTooLarge }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn-app-outline" (click)="close()">Cancel</button>
+        <button type="submit" class="btn-app-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          }
+          <span>Upload</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

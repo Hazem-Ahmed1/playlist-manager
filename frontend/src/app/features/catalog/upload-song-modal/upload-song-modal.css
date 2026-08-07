@@ -1,0 +1,22 @@
+.upload-dialog {
+  max-width: 520px;
+}
+
+.file-picker-btn {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.file-picker-name {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.file-hint {
+  margin-top: 0.4rem;
+  font-size: 0.76rem;
+  color: var(--text-faint);
+}
