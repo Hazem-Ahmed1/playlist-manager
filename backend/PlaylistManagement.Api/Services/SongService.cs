@@ -56,6 +56,17 @@ namespace PlaylistManagement.Api.Services
             return MapToDto(song);
         }
 
+        public async Task DeleteSongAsync(int id)
+        {
+            var song = await _songRepository.GetByIdAsync(id)
+                ?? throw new NotFoundException($"Song with id {id} was not found.");
+
+            _fileStorageService.DeleteFile(song.FilePath);
+
+            _songRepository.Remove(song);
+            await _songRepository.SaveChangesAsync();
+        }
+
         private static SongDto MapToDto(Song song) => new()
         {
             Id = song.Id,

@@ -13,5 +13,13 @@ namespace PlaylistManagement.Api.Interfaces
 
         /// <summary>Saves the uploaded audio file and adds it to the catalog. Admin-only — enforced at the controller, not here.</summary>
         Task<SongDto> UploadSongAsync(UploadSongDto dto);
+
+        /// <summary>
+        /// Removes a song from the catalog and deletes its audio file from
+        /// disk. The database cascades the removal to any PlaylistSong rows
+        /// referencing it. Throws NotFoundException if it doesn't exist.
+        /// Admin-only — enforced at the controller, not here.
+        /// </summary>
+        Task DeleteSongAsync(int id);
     }
 }

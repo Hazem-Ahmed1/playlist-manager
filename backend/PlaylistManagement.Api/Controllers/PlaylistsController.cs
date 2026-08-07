@@ -86,14 +86,14 @@ namespace PlaylistManagement.Api.Controllers
 
         /// <summary>Deletes a playlist owned by the current user.</summary>
         [HttpDelete("{id:int}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             await _playlistService.DeletePlaylistAsync(CurrentUserId, id);
 
-            return Ok(ApiResponse.Ok("Playlist deleted successfully."));
+            return NoContent();
         }
 
         /// <summary>Adds an existing song to a playlist owned by the current user.</summary>

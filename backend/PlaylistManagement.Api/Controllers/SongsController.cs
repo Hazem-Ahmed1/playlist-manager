@@ -62,5 +62,18 @@ namespace PlaylistManagement.Api.Controllers
                 new { id = song.Id },
                 ApiResponse<SongDto>.Ok(song, "Song uploaded successfully."));
         }
+
+        /// <summary>Removes a song from the catalog. Requires the Admin role.</summary>
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = Roles.Admin)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _songService.DeleteSongAsync(id);
+
+            return NoContent();
+        }
     }
 }
