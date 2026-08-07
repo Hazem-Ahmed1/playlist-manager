@@ -1,0 +1,50 @@
+<aside class="app-sidebar d-flex flex-column">
+  <div class="sidebar-logo d-flex align-items-center gap-2">
+    <span class="logo-mark">
+      <i class="fa-solid fa-wave-square"></i>
+    </span>
+    <span class="logo-text">SoundWave</span>
+  </div>
+
+  <nav class="sidebar-nav flex-grow-1" aria-label="Primary">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link-app">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+    <a routerLink="/playlists" routerLinkActive="active" class="nav-link-app">
+      <i class="fa-solid fa-list"></i>
+      <span>My Playlists</span>
+    </a>
+    <a routerLink="/songs" routerLinkActive="active" class="nav-link-app">
+      <i class="fa-solid fa-compact-disc"></i>
+      <span>All Songs</span>
+    </a>
+    @if (isAdmin()) {
+      <a routerLink="/catalog" routerLinkActive="active" class="nav-link-app">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Catalog Admin</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-footer d-flex flex-column gap-2">
+    @if (isLoggedIn()) {
+      <div class="sidebar-user d-flex align-items-center gap-2">
+        <span class="user-avatar">{{ currentUser()?.firstName?.charAt(0) }}</span>
+        <span class="user-name text-truncate">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+        <button type="button" class="icon-btn logout-icon-btn" (click)="logout()" aria-label="Log out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    } @else {
+      <button type="button" class="btn-app-primary w-100" (click)="openLogin()">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span>Login</span>
+      </button>
+      <button type="button" class="btn-app-outline w-100" (click)="openRegister()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Register</span>
+      </button>
+    }
+  </div>
+</aside>

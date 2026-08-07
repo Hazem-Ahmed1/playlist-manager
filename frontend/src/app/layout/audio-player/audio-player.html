@@ -1,0 +1,77 @@
+<footer class="audio-player" [class.has-song]="song() !== null">
+  <audio
+    #audioEl
+    class="visually-hidden"
+    (loadedmetadata)="onLoadedMetadata()"
+    (timeupdate)="onTimeUpdate()"
+    (play)="onPlay()"
+    (pause)="onPause()"
+    (ended)="onEnded()"
+  ></audio>
+
+  <div class="player-track d-flex align-items-center gap-3">
+    <div class="track-cover">
+      <i class="fa-solid fa-music"></i>
+    </div>
+    <div class="track-info text-truncate">
+      @if (song(); as current) {
+        <p class="track-title text-truncate">{{ current.title }}</p>
+        <p class="track-artist text-truncate">{{ current.artist }}</p>
+      } @else {
+        <p class="track-title text-truncate">No song playing</p>
+        <p class="track-artist text-truncate">Pick a track to start</p>
+      }
+    </div>
+    <button type="button" class="icon-btn favorite-btn" [disabled]="!song()" aria-label="Favorite">
+      <i class="fa-regular fa-heart"></i>
+    </button>
+  </div>
+
+  <div class="player-center d-flex flex-column align-items-center">
+    <div class="player-controls d-flex align-items-center gap-3">
+      <button type="button" class="icon-btn" [disabled]="!song()" aria-label="Previous track">
+        <i class="fa-solid fa-backward-step"></i>
+      </button>
+      <button
+        type="button"
+        class="play-btn"
+        [disabled]="!song()"
+        (click)="togglePlay()"
+        [attr.aria-label]="isPlaying() ? 'Pause' : 'Play'"
+      >
+        <i class="fa-solid" [class.fa-pause]="isPlaying()" [class.fa-play]="!isPlaying()"></i>
+      </button>
+      <button type="button" class="icon-btn" [disabled]="!song()" aria-label="Next track">
+        <i class="fa-solid fa-forward-step"></i>
+      </button>
+    </div>
+
+    <div class="player-progress d-flex align-items-center gap-2">
+      <span class="time-label">{{ formattedProgress() }}</span>
+      <input
+        type="range"
+        class="progress-slider"
+        min="0"
+        max="100"
+        [value]="progressPercent()"
+        [disabled]="!song()"
+        (input)="onSeek($event)"
+        aria-label="Seek"
+      />
+      <span class="time-label">{{ formattedDuration() }}</span>
+    </div>
+  </div>
+
+  <div class="player-volume d-flex align-items-center gap-2">
+    <i class="fa-solid" [class.fa-volume-high]="volume() > 0" [class.fa-volume-xmark]="volume() === 0"></i>
+    <input
+      type="range"
+      class="volume-slider"
+      min="0"
+      max="100"
+      [value]="volume()"
+      (input)="onVolumeChange($event)"
+      aria-label="Volume"
+    />
+  </div>
+</footer>

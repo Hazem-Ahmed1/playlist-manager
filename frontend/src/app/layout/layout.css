@@ -1,0 +1,25 @@
+.app-shell {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.25s var(--ease);
+}
+
+.app-main {
+  flex-grow: 1;
+  padding: 2rem;
+  padding-bottom: calc(var(--player-h) + 2rem);
+}
+
+@media (max-width: 991.98px) {
+  .app-shell {
+    margin-left: var(--sidebar-w-collapsed);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .app-main {
+    padding: 1.25rem;
+  }
+}
