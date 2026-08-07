@@ -1,0 +1,12 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="false">
+  @for (toast of toasts(); track toast.id) {
+    <div class="toast-item" [class]="'toast-' + toast.type" role="status">
+      <i class="toast-icon" [class]="'fa-solid ' + iconFor(toast.type)"></i>
+      <p class="toast-message">{{ toast.message }}</p>
+      <button type="button" class="toast-close" (click)="dismiss(toast.id)" aria-label="Dismiss notification">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <span class="toast-progress" [style.animation-duration.ms]="toast.duration"></span>
+    </div>
+  }
+</div>

@@ -1,0 +1,22 @@
+<section class="playlist-section fade-in-up">
+  <div class="section-heading d-flex align-items-center gap-2">
+    <h2>My Playlists</h2>
+    <span class="badge-pill-muted">{{ playlists().length }}</span>
+  </div>
+
+  <div class="playlist-list d-flex flex-column gap-3">
+    @for (playlist of playlists(); track playlist.id) {
+      <app-playlist-card
+        [playlist]="playlist"
+        (open)="openPlaylist.emit(playlist)"
+        (edit)="editPlaylist.emit(playlist)"
+        (delete)="deletePlaylist.emit(playlist)"
+      />
+    }
+
+    <button type="button" class="create-playlist-card" (click)="createPlaylist.emit()">
+      <i class="fa-solid fa-plus"></i>
+      <span>Create Playlist</span>
+    </button>
+  </div>
+</section>

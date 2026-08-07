@@ -1,0 +1,68 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="playlist-form-title">
+  <div class="modal-app-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon">
+      <i class="fa-solid" [class.fa-pen]="isEditMode()" [class.fa-plus]="!isEditMode()"></i>
+    </span>
+
+    <h2 id="playlist-form-title">{{ isEditMode() ? 'Edit playlist' : 'Create playlist' }}</h2>
+    <p class="modal-subtitle">
+      {{ isEditMode() ? 'Update the name or description.' : 'Give your new playlist a name.' }}
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field-group">
+        <label class="field-label" for="playlist-name">Name</label>
+        <input
+          id="playlist-name"
+          type="text"
+          class="field-control"
+          formControlName="name"
+          placeholder="Late Night Drive"
+          [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched"
+        />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <div class="field-feedback">
+            @if (form.controls.name.errors?.['required']) {
+              <span class="error">{{ messages.nameRequired }}</span>
+            } @else if (form.controls.name.errors?.['maxlength']) {
+              <span class="error">{{ messages.nameMaxLength }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="playlist-description">Description (optional)</label>
+        <textarea
+          id="playlist-description"
+          class="field-control"
+          rows="3"
+          formControlName="description"
+          placeholder="What's this playlist for?"
+          [class.is-invalid]="form.controls.description.invalid && form.controls.description.touched"
+        ></textarea>
+        @if (form.controls.description.touched && form.controls.description.errors?.['maxlength']) {
+          <div class="field-feedback">
+            <span class="error">{{ messages.descriptionMaxLength }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn-app-outline" (click)="close()">Cancel</button>
+        <button type="submit" class="btn-app-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          }
+          <span>{{ isEditMode() ? 'Save changes' : 'Create playlist' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+<section class="song-table-section surface-card fade-in-up">
+  <div class="section-heading d-flex align-items-center gap-2">
+    <h2>All Songs</h2>
+    <span class="badge-pill-muted">{{ songs().length }}</span>
+  </div>
+
+  @if (isLoading()) {
+    <p class="song-table-status">Loading songs…</p>
+  } @else if (songs().length === 0) {
+    <div class="song-table-empty">
+      <i class="fa-solid fa-music"></i>
+      <p>No songs available yet.</p>
+      <p class="song-table-empty-hint">Check back once an admin uploads some tracks.</p>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="song-table">
+        <thead>
+          <tr>
+            <th scope="col">Song</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Upload Date</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (song of songs(); track song.id) {
+            <tr
+              class="song-row"
+              [class.active]="song.id === activeSongId()"
+              (click)="songSelected.emit(song)"
+            >
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="song-cover">
+                    <i class="fa-solid fa-music"></i>
+                  </div>
+                  <div class="text-truncate">
+                    <p class="song-title text-truncate">{{ song.title }}</p>
+                    <p class="song-artist text-truncate">{{ song.artist }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="text-muted-cell">{{ song.duration }}</td>
+              <td class="text-muted-cell">{{ formattedDate(song.uploadedAt) }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="$event.stopPropagation(); songSelected.emit(song)"
+                  [attr.aria-label]="'Play ' + song.title"
+                >
+                  <i class="fa-solid fa-play"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

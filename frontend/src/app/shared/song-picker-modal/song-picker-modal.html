@@ -1,0 +1,64 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="song-picker-title">
+  <div class="modal-app-dialog picker-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon">
+      <i class="fa-solid fa-music"></i>
+    </span>
+
+    <h2 id="song-picker-title">Add a song</h2>
+    <p class="modal-subtitle">Pick a track from the catalog to add to this playlist.</p>
+
+    @if (!isLoading()) {
+      <div class="picker-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          type="text"
+          placeholder="Search by title or artist…"
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+          aria-label="Search songs"
+        />
+      </div>
+    }
+
+    @if (isLoading()) {
+      <p class="picker-status">Loading songs…</p>
+    } @else if (availableSongs().length === 0 && searchTerm()) {
+      <p class="picker-status">No songs match "{{ searchTerm() }}".</p>
+    } @else if (availableSongs().length === 0) {
+      <p class="picker-status">No more songs to add — everything's already in this playlist.</p>
+    } @else {
+      <ul class="picker-list">
+        @for (song of availableSongs(); track song.id) {
+          <li class="picker-row">
+            <div class="picker-cover">
+              <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="picker-info text-truncate">
+              <p class="picker-title text-truncate">{{ song.title }}</p>
+              <p class="picker-artist text-truncate">{{ song.artist }}</p>
+            </div>
+            <button
+              type="button"
+              class="btn-app-outline picker-add-btn"
+              [disabled]="addingSongId() === song.id"
+              (click)="addSong(song)"
+            >
+              @if (addingSongId() === song.id) {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+              } @else {
+                <i class="fa-solid fa-plus"></i>
+              }
+              <span>Add</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

@@ -1,0 +1,11 @@
+.confirm-dialog {
+  max-width: 400px;
+}
+
+.danger-icon {
+  background: linear-gradient(135deg, var(--danger), var(--danger-light));
+}
+
+.btn-danger-solid {
+  background: linear-gradient(135deg, var(--danger), var(--danger-light));
+}

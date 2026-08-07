@@ -1,0 +1,28 @@
+<div class="modal-backdrop-app fade-in" (click)="cancelled.emit()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+  <div class="modal-app-dialog confirm-dialog">
+    <button type="button" class="modal-close-btn" (click)="cancelled.emit()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <span class="modal-icon" [class.danger-icon]="danger()">
+      <i class="fa-solid" [class.fa-triangle-exclamation]="danger()" [class.fa-circle-question]="!danger()"></i>
+    </span>
+
+    <h2 id="confirm-modal-title">{{ title() }}</h2>
+    <p class="modal-subtitle">{{ message() }}</p>
+
+    <div class="modal-actions d-flex justify-content-end gap-2">
+      <button type="button" class="btn-app-outline" (click)="cancelled.emit()">{{ cancelLabel() }}</button>
+      <button
+        type="button"
+        class="btn-app-primary"
+        [class.btn-danger-solid]="danger()"
+        (click)="confirmed.emit()"
+      >
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  </div>
+</div>

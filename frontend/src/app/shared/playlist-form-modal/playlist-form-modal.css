@@ -1,0 +1,5 @@
+textarea.field-control {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}

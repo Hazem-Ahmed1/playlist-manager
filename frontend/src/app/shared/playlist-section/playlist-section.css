@@ -1,0 +1,29 @@
+.section-heading {
+  margin-bottom: 1.1rem;
+}
+
+.section-heading h2 {
+  font-size: 1.3rem;
+}
+
+.create-playlist-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--r-lg);
+  border: 1.5px dashed var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.create-playlist-card:hover {
+  border-color: var(--primary-light);
+  color: var(--text);
+  background: var(--surface);
+}

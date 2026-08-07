@@ -1,0 +1,46 @@
+<article
+  class="playlist-card surface-card d-flex align-items-center gap-3"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Open ' + playlist().name"
+  (click)="open.emit()"
+  (keydown.enter)="open.emit()"
+  (keydown.space)="open.emit()"
+>
+  <div class="playlist-cover">
+    @if (playlist().coverImagePath) {
+      <img [ngSrc]="playlist().coverImagePath!" fill alt="" />
+    } @else {
+      <i class="fa-solid fa-guitar"></i>
+    }
+  </div>
+
+  <div class="playlist-info flex-grow-1 text-truncate">
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="playlist-name text-truncate">{{ playlist().name }}</h3>
+      @if (isDemo()) {
+        <span class="badge-pill-muted demo-badge">Demo</span>
+      }
+    </div>
+    <p class="playlist-meta">{{ playlist().songCount }} songs · {{ formattedDate() }}</p>
+  </div>
+
+  <div class="playlist-actions d-flex align-items-center gap-1">
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="$event.stopPropagation(); edit.emit()"
+      [attr.aria-label]="'Edit ' + playlist().name"
+    >
+      <i class="fa-solid fa-pen"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-btn danger"
+      (click)="$event.stopPropagation(); delete.emit()"
+      [attr.aria-label]="'Delete ' + playlist().name"
+    >
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  </div>
+</article>
