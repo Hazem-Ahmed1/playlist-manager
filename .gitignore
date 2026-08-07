@@ -55,3 +55,12 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Visual Studio
+.vs/
+*.user
+
+# Angular / Node (frontend has its own .gitignore too)
+node_modules/
+dist/
+.angular/

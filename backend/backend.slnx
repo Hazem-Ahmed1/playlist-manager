@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="PlaylistManagement.Api/PlaylistManagement.Api.csproj" />
+  <Project Path="PlaylistManagement.IntegrationTests/PlaylistManagement.IntegrationTests.csproj" />
+  <Project Path="PlaylistManagement.UnitTests/PlaylistManagement.UnitTests.csproj" />
+</Solution>
