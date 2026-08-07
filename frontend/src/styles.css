@@ -1,1 +1,532 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+:root {
+  /* Palette */
+  --primary: #4F46E5;
+  --primary-light: #6366F1;
+  --secondary: #8B5CF6;
+
+  --bg: #0F172A;
+  --bg-elevated: #131f38;
+
+  --surface: #1E293B;
+  --surface-2: #263449;
+  --surface-3: #2f3f58;
+
+  --accent: #22C55E;
+
+  --danger: #EF4444;
+  --danger-light: #f87171;
+
+  --text: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-faint: #64748B;
+
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.22);
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 0 1px rgba(79, 70, 229, 0.25), 0 8px 30px rgba(79, 70, 229, 0.25);
+
+  /* Layout */
+  --sidebar-w: 264px;
+  --sidebar-w-collapsed: 84px;
+  --topbar-h: 72px;
+  --player-h: 92px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Manrope', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--primary-light);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Custom scrollbar, dark-theme appropriate */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+
+/* ==========================================================================
+   Reusable surface / interactive primitives
+   ========================================================================== */
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.surface-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-app-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--text);
+  border: none;
+  border-radius: var(--r-md);
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: box-shadow 0.2s var(--ease), transform 0.15s var(--ease), opacity 0.2s var(--ease);
+}
+
+.btn-app-primary:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.btn-app-primary:active {
+  transform: translateY(0);
+}
+
+.btn-app-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-app-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 0.6rem 1.15rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.btn-app-outline:hover {
+  background: var(--surface-2);
+  border-color: var(--text-faint);
+  color: var(--text);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.icon-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger-light);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary-light);
+  font-weight: 600;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.badge-pill-muted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Reactive Forms — custom validation feedback (no Bootstrap defaults)
+   ========================================================================== */
+.field-group {
+  margin-bottom: 1.1rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.field-control {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.field-control::placeholder {
+  color: var(--text-faint);
+}
+
+.field-control:focus {
+  outline: none;
+  background: var(--surface-3);
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.field-control.is-invalid {
+  border-color: var(--danger);
+}
+
+.field-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+.field-control.is-valid {
+  border-color: var(--accent);
+}
+
+.field-feedback {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.field-feedback .error {
+  font-size: 0.78rem;
+  color: var(--danger-light);
+}
+
+/* ==========================================================================
+   Modal shell — shared by LoginModal and RegisterModal (component styles
+   are scoped in Angular, so this common shell lives globally instead of
+   being duplicated in both components).
+   ========================================================================== */
+.modal-backdrop-app {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 20, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+}
+
+.modal-app-wrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 91;
+  pointer-events: none;
+  overflow-y: auto;
+}
+
+.modal-app-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+  pointer-events: auto;
+  animation: modalPop 0.25s var(--ease);
+  margin-block: auto;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.modal-close-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--text);
+  font-size: 1.2rem;
+  margin-bottom: 1.1rem;
+}
+
+.modal-app-dialog h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.modal-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.6rem;
+}
+
+.demo-account-row {
+  margin-bottom: 1.4rem;
+}
+
+.demo-account-row .demo-btn {
+  flex: 1;
+  font-size: 0.8rem;
+  padding-block: 0.5rem;
+}
+
+.modal-actions {
+  margin-top: 0.5rem;
+}
+
+.modal-footer-text {
+  margin-top: 1.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Page heading — shared across every routed feature page
+   ========================================================================== */
+.page-breadcrumb {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+.page-heading h1 {
+  font-size: 2.1rem;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.page-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.content-row {
+  margin-top: 2rem;
+}
+
+/* ==========================================================================
+   Error pages — shared by NotFound (404) and Forbidden (403)
+   ========================================================================== */
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg);
+}
+
+.error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--primary-light);
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.error-code {
+  font-size: 6rem;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.error-title {
+  font-size: 1.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.error-message {
+  color: var(--text-muted);
+  max-width: 420px;
+  margin-bottom: 2rem;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s var(--ease);
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.35s var(--ease);
+}
+
+/* ==========================================================================
+   Focus visibility (a11y)
+   ========================================================================== */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
