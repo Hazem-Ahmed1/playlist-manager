@@ -194,6 +194,7 @@ namespace PlaylistManagement.Api.Services
                     Artist = ps.Song.Artist,
                     Album = ps.Song.Album,
                     Duration = ps.Song.Duration,
+                    FilePath = ps.Song.FilePath,
                     Order = ps.Order,
                     AddedAt = ps.AddedAt
                 })

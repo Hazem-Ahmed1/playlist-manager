@@ -128,6 +128,23 @@ namespace PlaylistManagement.Api
 
             builder.Services.AddAuthorization();
 
+            // Lets the Angular dev server call this API from a different
+            // origin/port. AllowedOrigins is configurable per-environment
+            // via appsettings so this isn't hardcoded to one dev port.
+            const string FrontendCorsPolicy = "FrontendCorsPolicy";
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? Array.Empty<string>();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(FrontendCorsPolicy, policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
             // Repositories
             builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             builder.Services.AddScoped<ISongRepository, SongRepository>();
@@ -161,6 +178,8 @@ namespace PlaylistManagement.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors(FrontendCorsPolicy);
 
             app.UseStaticFiles();
 

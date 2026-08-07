@@ -31,6 +31,9 @@ namespace PlaylistManagement.Api.DTOs.Playlists
 
         public TimeSpan Duration { get; set; }
 
+        /// <summary>Relative path under wwwroot (e.g. "uploads/songs/{guid}.mp3") — needed so the client can actually play this track.</summary>
+        public string FilePath { get; set; } = string.Empty;
+
         public int Order { get; set; }
 
         public DateTime AddedAt { get; set; }
