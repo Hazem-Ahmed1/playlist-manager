@@ -14,7 +14,6 @@ A full-stack playlist management application: users create playlists and build t
 - [Architecture](#architecture)
 - [Database Documentation](#database-documentation)
 - [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
 - [Running the Project](#running-the-project)
 - [Demo Accounts](#demo-accounts)
 - [API Overview](#api-overview)
@@ -144,18 +143,23 @@ removes its associations from whatever playlists contained it; it does not delet
 
 ---
 
-## Getting Started
+## Running the Project
+
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/Hazem-Ahmed1/playlist-manager.git
 cd playlist-manager
 ```
 
----
+### 2. Change credentials
 
-## Running the Project
+In `backend/PlaylistManagement.Api/appsettings.Development.json`:
 
-### 1. Backend
+- `ConnectionStrings:DefaultConnection` — `Server=.;...` if your SQL Server instance isn't the local default.
+- `Jwt:Key` — swap in your own secret if you want tokens private to your machine.
+
+### 3. Backend
 
 ```bash
 cd backend
@@ -169,12 +173,7 @@ dotnet run --project PlaylistManagement.Api --launch-profile https
 
 The API starts on `https://localhost:7019` (and `http://localhost:5074`). Swagger UI opens automatically at `/swagger`. Migrations apply themselves on startup, so there's no separate `dotnet ef database update` step to run first — though you can still run one manually if you'd rather create the database ahead of time.
 
-> **Credentials you may need to change**, in `PlaylistManagement.Api/appsettings.Development.json`:
->
-> - `ConnectionStrings:DefaultConnection` — `Server=.;...` if your SQL Server instance isn't the local default.
-> - `Jwt:Key` — swap in your own secret if you want tokens private to your machine.
-
-### 2. Frontend
+### 4. Frontend
 
 ```bash
 cd frontend
@@ -186,7 +185,7 @@ The app serves at `http://localhost:4200`. `src/environments/environment.develop
 
 > **CORS:** the backend's allowed origins are configured in `appsettings.json` under `Cors:AllowedOrigins`. `http://localhost:4200` is included by default; add your own port there if you serve the frontend elsewhere.
 
-### 3. Try it out
+### 5. Try it out
 
 1. Open `http://localhost:4200` — you'll see the song catalog (public) and a demo playlist card.
 2. Click **Login** in the sidebar and use **Fill demo user** or **Fill demo admin** to auto-fill one of the seeded accounts, then submit.
