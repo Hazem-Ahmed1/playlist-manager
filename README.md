@@ -156,8 +156,13 @@ cd playlist-manager
 
 In `backend/PlaylistManagement.Api/appsettings.Development.json`:
 
-- `ConnectionStrings:DefaultConnection` — `Server=.;...` if your SQL Server instance isn't the local default.
-- `Jwt:Key` — swap in your own secret if you want tokens private to your machine.
+- `ConnectionStrings:DefaultConnection` — Update the connection string to match your SQL Server instance. If `Server=.` doesn't work, replace `.` with your SQL Server server/instance name (for example: `localhost`, `.\SQLEXPRESS`, or `DESKTOP-XXXX\SQLEXPRESS`).
+
+- `Jwt:Key` — An example randomly generated test key is provided:
+
+  `FxRgY3AOHaBjgG2d8EU0EQ6vXFeOdVeMqBPdJTq6lof`
+
+  You can use this key for local development, or generate your own secure key using **JWT Secret Key Generator**: https://jwtsecretkeygenerator.com/
 
 ### 3. Backend
 

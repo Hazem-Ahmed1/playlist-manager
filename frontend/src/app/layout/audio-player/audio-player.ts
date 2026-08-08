@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PlayerStateService } from '../../core/services/player-state.service';
 import { resolveMediaUrl } from '../../core/utils/media-url.util';
 import { formatDurationDisplay, formatSecondsCompact } from '../../core/utils/duration.util';
@@ -36,7 +36,7 @@ export class AudioPlayer {
       }
 
       audio.src = resolveMediaUrl(current.filePath);
-      audio.volume = this.volume() / 100;
+      audio.volume = untracked(this.volume) / 100;
       audio.play().catch(() => {
         // Browsers can block autoplay until the user has interacted with
         // the page at least once — isPlaying just reflects what actually happened.
