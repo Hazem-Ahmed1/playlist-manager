@@ -20,7 +20,6 @@ A full-stack playlist management application: users create playlists and build t
 - [API Overview](#api-overview)
 - [Running the Tests](#running-the-tests)
 - [Screenshots](#screenshots)
-- [AI Usage](#ai-usage)
 
 ---
 
@@ -98,9 +97,12 @@ Route guards (`authGuard`, `adminGuard`) are functional guards; `adminGuard` dec
 
 ---
 
+
 ## Database Documentation
 
-Full documentation for this database is three things: the story below, an ERD, and a schema diagram. For the underlying ER concepts behind them (entities, attributes, cardinality, participation, notation) and how they were worked out from the story, see [`docs/database-documentation-guide.md`](docs/database-documentation-guide.md).
+This database is documented through three complementary artifacts: the business story, the Entity-Relationship Diagram (ERD), and the relational schema diagram.
+
+For a detailed explanation of the ER modeling concepts (entities, attributes, relationships, cardinality, participation, notation) and the design decisions behind the database, see the [Database Documentation](Database_Documentation.pdf)..
 
 ### The story
 
@@ -113,9 +115,7 @@ Full documentation for this database is three things: the story below, an ERD, a
 • Each playlist–song pairing carries its own data: the date the song was added to that playlist, and the song's 
 order/position within that playlist. 
 
-Songs live in a single shared catalog and are visible to every user. A user builds a playlist by selecting existing 
-songs from that catalog and attaching them to their playlist - songs are not uploaded per playlist or per user. 
-Because the same song can sit inside many different playlists at once, and a playlist obviously holds many songs, 
+Songs live in a single shared catalog and are visible to every user. A user builds a playlist by selecting existing songs from that catalog and attaching them to their playlist - songs are not uploaded per playlist or per user.Because the same song can sit inside many different playlists at once, and a playlist obviously holds many songs, 
 the relationship between Playlist and Song is many-to-many. A plain foreign key cannot represent this, so the 
 relationship is implemented through a junction table, PlaylistSong, which resolves the many-to-many relationship  
 Deleting a user deletes their playlists, since nothing else in the database references a user directly. Deleting a 
@@ -169,10 +169,10 @@ dotnet run --project PlaylistManagement.Api --launch-profile https
 
 The API starts on `https://localhost:7019` (and `http://localhost:5074`). Swagger UI opens automatically at `/swagger`. Migrations apply themselves on startup, so there's no separate `dotnet ef database update` step to run first — though you can still run one manually if you'd rather create the database ahead of time.
 
-> **Credentials you may need to change**, both in `PlaylistManagement.Api/appsettings.Development.json`:
+> **Credentials you may need to change**, in `PlaylistManagement.Api/appsettings.Development.json`:
 >
-> - **`ConnectionStrings:DefaultConnection`** — ships as `Server=localhost;Database=PlaylistManagementDb;Trusted_Connection=True;TrustServerCertificate=True;`. That works out of the box for a default local SQL Server instance; point `Server=` elsewhere if yours is different — e.g. `Server=(localdb)\mssqllocaldb;...` or `Server=YOUR-MACHINE-NAME;...` for a named instance. `Trusted_Connection=True` uses your current Windows login; switch to `User Id=...;Password=...;` instead if your instance uses SQL authentication.
-> - **`Jwt:Key`** — ships with a working (but shared, and therefore insecure) 32+ character key so the project runs out of the box. Swap in your own local secret if you want tokens that are actually private to your machine. (`appsettings.json`, used outside the Development environment, instead ships a literal `REPLACE_WITH_A_LOCAL_DEV_SECRET...` placeholder — replace it with a real secret before running under any non-Development environment, since this file is committed to source control and its value is public.)
+> - `ConnectionStrings:DefaultConnection` — `Server=.;...` if your SQL Server instance isn't the local default.
+> - `Jwt:Key` — swap in your own secret if you want tokens private to your machine.
 
 ### 2. Frontend
 
@@ -264,7 +264,3 @@ Unit tests mock every dependency (no database). Integration tests boot the real 
 | ![My Playlists](docs/screenshots/playlists.png) | ![Catalog Admin](docs/screenshots/catalog.png) |
 
 ---
-
-## AI Usage
-
-Parts of this project (backend scaffolding, service/repository/controller implementation, tests, and the Angular frontend) were built with AI assistance (Claude, via Claude Code). Design decisions, validation rules, and architecture choices were reviewed and directed throughout the process rather than accepted as a single unreviewed generation.
