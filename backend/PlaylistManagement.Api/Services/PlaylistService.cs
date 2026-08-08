@@ -1,6 +1,7 @@
+using PlaylistManagement.Api.Common;
 using PlaylistManagement.Api.DTOs.Playlists;
 using PlaylistManagement.Api.Interfaces;
-using PlaylistManagement.Api.Middleware.Exceptions;
+using PlaylistManagement.Api.Mapping;
 using PlaylistManagement.Api.Models;
 
 namespace PlaylistManagement.Api.Services
@@ -11,19 +12,27 @@ namespace PlaylistManagement.Api.Services
         private readonly IPlaylistRepository _playlistRepository;
         private readonly ISongRepository _songRepository;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IPlaylistMapper _mapper;
 
         public PlaylistService(
             IPlaylistRepository playlistRepository,
             ISongRepository songRepository,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            IPlaylistMapper mapper)
         {
             _playlistRepository = playlistRepository;
             _songRepository = songRepository;
             _fileStorageService = fileStorageService;
+            _mapper = mapper;
         }
 
-        public async Task<PlaylistDto> CreatePlaylistAsync(string userId, CreatePlaylistDto dto)
+        public async Task<Result<PlaylistDto>> CreatePlaylistAsync(string userId, CreatePlaylistDto dto)
         {
+            if (await _playlistRepository.ExistsByNameAsync(userId, dto.Name))
+            {
+                return Result<PlaylistDto>.Failure(ErrorType.BadRequest, "You already have a playlist with this name.");
+            }
+
             var playlist = new Playlist
             {
                 Name = dto.Name,
@@ -36,34 +45,57 @@ namespace PlaylistManagement.Api.Services
             await _playlistRepository.AddAsync(playlist);
             await _playlistRepository.SaveChangesAsync();
 
-            return MapToDto(playlist);
+            return Result<PlaylistDto>.Success(_mapper.ToDto(playlist));
         }
 
         public async Task<IReadOnlyList<PlaylistDto>> GetUserPlaylistsAsync(string userId)
         {
             var playlists = await _playlistRepository.GetByUserIdAsync(userId);
-            return playlists.Select(MapToDto).ToList();
+            return playlists.Select(_mapper.ToDto).ToList();
         }
 
-        public async Task<PlaylistDetailDto> GetPlaylistByIdAsync(string userId, int playlistId)
+        public async Task<Result<PlaylistDetailDto>> GetPlaylistByIdAsync(string userId, int playlistId)
         {
-            var playlist = await GetOwnedPlaylistWithSongsAsync(userId, playlistId);
-            return MapToDetailDto(playlist);
+            var lookup = await GetOwnedPlaylistWithSongsAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result<PlaylistDetailDto>.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
+
+            return Result<PlaylistDetailDto>.Success(_mapper.ToDetailDto(lookup.Value!));
         }
 
-        public async Task DeletePlaylistAsync(string userId, int playlistId)
+        public async Task<Result> DeletePlaylistAsync(string userId, int playlistId)
         {
-            var playlist = await GetOwnedPlaylistAsync(userId, playlistId);
+            var lookup = await GetOwnedPlaylistAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
 
+            var playlist = lookup.Value!;
             _fileStorageService.DeleteFile(playlist.CoverImagePath);
 
             _playlistRepository.Remove(playlist);
             await _playlistRepository.SaveChangesAsync();
+
+            return Result.Success();
         }
 
-        public async Task<PlaylistDto> UpdatePlaylistAsync(string userId, int playlistId, UpdatePlaylistDto dto)
+        public async Task<Result<PlaylistDto>> UpdatePlaylistAsync(string userId, int playlistId, UpdatePlaylistDto dto)
         {
-            var playlist = await GetOwnedPlaylistAsync(userId, playlistId);
+            var lookup = await GetOwnedPlaylistAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result<PlaylistDto>.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
+
+            var playlist = lookup.Value!;
+
+            if (await _playlistRepository.ExistsByNameAsync(userId, dto.Name, excludePlaylistId: playlistId))
+            {
+                return Result<PlaylistDto>.Failure(ErrorType.BadRequest, "You already have a playlist with this name.");
+            }
 
             playlist.Name = dto.Name;
             playlist.Description = dto.Description;
@@ -72,12 +104,18 @@ namespace PlaylistManagement.Api.Services
             _playlistRepository.Update(playlist);
             await _playlistRepository.SaveChangesAsync();
 
-            return MapToDto(playlist);
+            return Result<PlaylistDto>.Success(_mapper.ToDto(playlist));
         }
 
-        public async Task<PlaylistDto> UploadCoverImageAsync(string userId, int playlistId, UploadCoverImageDto dto)
+        public async Task<Result<PlaylistDto>> UploadCoverImageAsync(string userId, int playlistId, UploadCoverImageDto dto)
         {
-            var playlist = await GetOwnedPlaylistAsync(userId, playlistId);
+            var lookup = await GetOwnedPlaylistAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result<PlaylistDto>.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
+
+            var playlist = lookup.Value!;
 
             // Replacing an existing cover shouldn't leave the old file behind.
             _fileStorageService.DeleteFile(playlist.CoverImagePath);
@@ -90,20 +128,29 @@ namespace PlaylistManagement.Api.Services
             _playlistRepository.Update(playlist);
             await _playlistRepository.SaveChangesAsync();
 
-            return MapToDto(playlist);
+            return Result<PlaylistDto>.Success(_mapper.ToDto(playlist));
         }
 
-        public async Task AddSongToPlaylistAsync(string userId, int playlistId, AddSongToPlaylistDto dto)
+        public async Task<Result> AddSongToPlaylistAsync(string userId, int playlistId, AddSongToPlaylistDto dto)
         {
-            var playlist = await GetOwnedPlaylistAsync(userId, playlistId);
+            var lookup = await GetOwnedPlaylistAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
 
-            var song = await _songRepository.GetByIdAsync(dto.SongId)
-                ?? throw new NotFoundException($"Song with id {dto.SongId} was not found.");
+            var playlist = lookup.Value!;
+
+            var song = await _songRepository.GetByIdAsync(dto.SongId);
+            if (song is null)
+            {
+                return Result.Failure(ErrorType.NotFound, $"Song with id {dto.SongId} was not found.");
+            }
 
             var existingAssociation = await _playlistRepository.GetPlaylistSongAsync(playlistId, song.Id);
             if (existingAssociation is not null)
             {
-                throw new BadRequestException("This song is already in the playlist.");
+                return Result.Failure(ErrorType.BadRequest, "This song is already in the playlist.");
             }
 
             var nextOrder = await _playlistRepository.GetNextSongOrderAsync(playlistId);
@@ -120,14 +167,25 @@ namespace PlaylistManagement.Api.Services
             _playlistRepository.Update(playlist);
 
             await _playlistRepository.SaveChangesAsync();
+
+            return Result.Success();
         }
 
-        public async Task RemoveSongFromPlaylistAsync(string userId, int playlistId, int songId)
+        public async Task<Result> RemoveSongFromPlaylistAsync(string userId, int playlistId, int songId)
         {
-            var playlist = await GetOwnedPlaylistAsync(userId, playlistId);
+            var lookup = await GetOwnedPlaylistAsync(userId, playlistId);
+            if (!lookup.IsSuccess)
+            {
+                return Result.Failure(lookup.ErrorType, lookup.ErrorMessage!);
+            }
 
-            var association = await _playlistRepository.GetPlaylistSongAsync(playlistId, songId)
-                ?? throw new NotFoundException($"Song with id {songId} was not found in this playlist.");
+            var playlist = lookup.Value!;
+
+            var association = await _playlistRepository.GetPlaylistSongAsync(playlistId, songId);
+            if (association is null)
+            {
+                return Result.Failure(ErrorType.NotFound, $"Song with id {songId} was not found in this playlist.");
+            }
 
             _playlistRepository.RemoveSong(association);
 
@@ -135,70 +193,36 @@ namespace PlaylistManagement.Api.Services
             _playlistRepository.Update(playlist);
 
             await _playlistRepository.SaveChangesAsync();
+
+            return Result.Success();
         }
 
         /// <summary>Loads a playlist (with its songs, for SongCount) and enforces that it belongs to the given user.</summary>
-        private async Task<Playlist> GetOwnedPlaylistAsync(string userId, int playlistId)
+        private async Task<Result<Playlist>> GetOwnedPlaylistAsync(string userId, int playlistId)
         {
-            var playlist = await _playlistRepository.GetByIdAsync(playlistId)
-                ?? throw new NotFoundException($"Playlist with id {playlistId} was not found.");
-
-            EnsureOwnership(userId, playlist);
-
-            return playlist;
-        }
-
-        private async Task<Playlist> GetOwnedPlaylistWithSongsAsync(string userId, int playlistId)
-        {
-            var playlist = await _playlistRepository.GetByIdWithSongsAsync(playlistId)
-                ?? throw new NotFoundException($"Playlist with id {playlistId} was not found.");
-
-            EnsureOwnership(userId, playlist);
-
-            return playlist;
-        }
-
-        private static void EnsureOwnership(string userId, Playlist playlist)
-        {
-            if (playlist.UserId != userId)
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist is null)
             {
-                throw new ForbiddenAccessException("You do not have access to this playlist.");
+                return Result<Playlist>.Failure(ErrorType.NotFound, $"Playlist with id {playlistId} was not found.");
             }
+
+            return EnsureOwnership(userId, playlist);
         }
 
-        private static PlaylistDto MapToDto(Playlist playlist) => new()
+        private async Task<Result<Playlist>> GetOwnedPlaylistWithSongsAsync(string userId, int playlistId)
         {
-            Id = playlist.Id,
-            Name = playlist.Name,
-            Description = playlist.Description,
-            CoverImagePath = playlist.CoverImagePath,
-            SongCount = playlist.PlaylistSongs.Count,
-            CreatedAt = playlist.CreatedAt,
-            UpdatedAt = playlist.UpdatedAt
-        };
+            var playlist = await _playlistRepository.GetByIdWithSongsAsync(playlistId);
+            if (playlist is null)
+            {
+                return Result<Playlist>.Failure(ErrorType.NotFound, $"Playlist with id {playlistId} was not found.");
+            }
 
-        private static PlaylistDetailDto MapToDetailDto(Playlist playlist) => new()
-        {
-            Id = playlist.Id,
-            Name = playlist.Name,
-            Description = playlist.Description,
-            CoverImagePath = playlist.CoverImagePath,
-            CreatedAt = playlist.CreatedAt,
-            UpdatedAt = playlist.UpdatedAt,
-            Songs = playlist.PlaylistSongs
-                .OrderBy(ps => ps.Order)
-                .Select(ps => new PlaylistSongDto
-                {
-                    SongId = ps.SongId,
-                    Title = ps.Song.Title,
-                    Artist = ps.Song.Artist,
-                    Album = ps.Song.Album,
-                    Duration = ps.Song.Duration,
-                    FilePath = ps.Song.FilePath,
-                    Order = ps.Order,
-                    AddedAt = ps.AddedAt
-                })
-                .ToList()
-        };
+            return EnsureOwnership(userId, playlist);
+        }
+
+        private static Result<Playlist> EnsureOwnership(string userId, Playlist playlist) =>
+            playlist.UserId == userId
+                ? Result<Playlist>.Success(playlist)
+                : Result<Playlist>.Failure(ErrorType.Forbidden, "You do not have access to this playlist.");
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.OpenApi;
 using PlaylistManagement.Api.Data;
 using PlaylistManagement.Api.DTOs.Common;
 using PlaylistManagement.Api.Interfaces;
+using PlaylistManagement.Api.Mapping;
 using PlaylistManagement.Api.Middleware;
 using PlaylistManagement.Api.Models;
 using PlaylistManagement.Api.Models.Options;
@@ -156,10 +157,28 @@ namespace PlaylistManagement.Api
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
+            // Mapping (entity <-> DTO), split out of the services (SRP) —
+            // see Mapping/.
+            builder.Services.AddScoped<IPlaylistMapper, PlaylistMapper>();
+            builder.Services.AddScoped<ISongMapper, SongMapper>();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
             {
+                // Applies any pending migrations on startup so a fresh database
+                // (e.g. a brand-new Docker volume) doesn't need a manual
+                // `dotnet ef database update` before the API can run. Only
+                // for SQL Server — the integration test host swaps in
+                // SQLite and builds its schema with EnsureCreated instead,
+                // since the migrations contain SQL Server-specific syntax
+                // SQLite can't run.
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                if (dbContext.Database.IsSqlServer())
+                {
+                    await dbContext.Database.MigrateAsync();
+                }
+
                 await DataSeeder.SeedAsync(scope.ServiceProvider, app.Environment);
             }
 
@@ -177,7 +196,14 @@ namespace PlaylistManagement.Api
                 });
             }
 
-            app.UseHttpsRedirection();
+            // Inside Docker the API is served plain HTTP on the container's
+            // internal network (TLS, if any, terminates at the reverse
+            // proxy), so redirecting to HTTPS would just break every request.
+            var runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+            if (!runningInContainer)
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseCors(FrontendCorsPolicy);
 

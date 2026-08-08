@@ -41,9 +41,13 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
-            var song = await _songService.GetSongByIdAsync(id);
+            var result = await _songService.GetSongByIdAsync(id);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
-            return Ok(ApiResponse<SongDto>.Ok(song));
+            return Ok(ApiResponse<SongDto>.Ok(result.Value!));
         }
 
         /// <summary>Uploads a new song to the catalog. Requires the Admin role.</summary>
@@ -63,6 +67,24 @@ namespace PlaylistManagement.Api.Controllers
                 ApiResponse<SongDto>.Ok(song, "Song uploaded successfully."));
         }
 
+        /// <summary>Updates a song's metadata. Requires the Admin role.</summary>
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = Roles.Admin)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateSongDto dto)
+        {
+            var result = await _songService.UpdateSongAsync(id, dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
+
+            return Ok(ApiResponse<SongDto>.Ok(result.Value!, "Song updated successfully."));
+        }
+
         /// <summary>Removes a song from the catalog. Requires the Admin role.</summary>
         [HttpDelete("{id:int}")]
         [Authorize(Roles = Roles.Admin)]
@@ -71,7 +93,11 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            await _songService.DeleteSongAsync(id);
+            var result = await _songService.DeleteSongAsync(id);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return NoContent();
         }

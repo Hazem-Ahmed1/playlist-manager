@@ -20,3 +20,12 @@ export const SONG_MESSAGES = {
 
 export const ALLOWED_SONG_EXTENSIONS = ['.mp3', '.wav', '.m4a'];
 export const MAX_SONG_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+
+/** Mirrors PlaylistManagement.Api.DTOs.Playlists.UploadCoverImageDto and its AllowedExtensions/MaxFileSize attributes. */
+export const COVER_MESSAGES = {
+  fileInvalidExtension: 'Only JPG, PNG, and WEBP images are allowed.',
+  fileTooLarge: 'Cover image size cannot exceed 5 MB.',
+} as const;
+
+export const ALLOWED_COVER_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+export const MAX_COVER_FILE_SIZE_BYTES = 5 * 1024 * 1024;

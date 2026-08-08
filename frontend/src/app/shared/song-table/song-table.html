@@ -41,7 +41,7 @@
                   </div>
                 </div>
               </td>
-              <td class="text-muted-cell">{{ song.duration }}</td>
+              <td class="text-muted-cell">{{ song.duration | duration }}</td>
               <td class="text-muted-cell">{{ formattedDate(song.uploadedAt) }}</td>
               <td>
                 <button

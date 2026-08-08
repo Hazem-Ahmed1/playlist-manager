@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { Song } from '../../core/models/song.model';
+import { DurationPipe } from '../pipes/duration.pipe';
 
 @Component({
   selector: 'app-song-table',
+  imports: [DurationPipe],
   templateUrl: './song-table.html',
   styleUrl: './song-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

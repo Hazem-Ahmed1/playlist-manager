@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { PlaylistSection } from '../../../shared/playlist-section/playlist-section';
 import { PlaylistFormModal } from '../../../shared/playlist-form-modal/playlist-form-modal';
@@ -17,6 +18,7 @@ export class PlaylistList {
   private readonly router = inject(Router);
   private readonly playlistService = inject(PlaylistService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly playlists = signal<Playlist[]>([]);
   readonly isLoading = signal(true);
@@ -26,16 +28,19 @@ export class PlaylistList {
   readonly pendingDeletePlaylist = signal<Playlist | null>(null);
 
   constructor() {
-    this.playlistService.getMyPlaylists().subscribe({
-      next: (playlists) => {
-        this.playlists.set(playlists);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Failed to load your playlists.');
-      },
-    });
+    this.playlistService
+      .getMyPlaylists()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (playlists) => {
+          this.playlists.set(playlists);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toast.error('Failed to load your playlists.');
+        },
+      });
   }
 
   onOpenPlaylist(playlist: Playlist): void {
@@ -71,12 +76,15 @@ export class PlaylistList {
       return;
     }
 
-    this.playlistService.delete(playlist.id).subscribe({
-      next: () => {
-        this.playlists.update((list) => list.filter((p) => p.id !== playlist.id));
-        this.toast.success('Playlist deleted successfully.');
-      },
-      error: () => this.toast.error('Failed to delete the playlist.'),
-    });
+    this.playlistService
+      .delete(playlist.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.playlists.update((list) => list.filter((p) => p.id !== playlist.id));
+          this.toast.success('Playlist deleted successfully.');
+        },
+        error: () => this.toast.error('Failed to delete the playlist.'),
+      });
   }
 }

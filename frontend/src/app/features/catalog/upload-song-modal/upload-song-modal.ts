@@ -7,16 +7,7 @@ import { ApiErrorResponse } from '../../../core/models/api-response.model';
 import { Song } from '../../../core/models/song.model';
 import { ALLOWED_SONG_EXTENSIONS, SONG_MESSAGES } from '../../../core/constants/validation-messages';
 import { songFileExtensionValidator, songFileSizeValidator } from '../../../core/validators/file-validators';
-
-/** Converts a user-entered "mm:ss" into the "hh:mm:ss" shape the backend's TimeSpan binder expects — "3:45" alone would otherwise parse as 3 hours 45 minutes. */
-function toTimeSpanString(mmSs: string): string | null {
-  const match = /^(\d{1,2}):([0-5]?\d)$/.exec(mmSs.trim());
-  if (!match) {
-    return null;
-  }
-  const [, minutes, seconds] = match;
-  return `00:${minutes.padStart(2, '0')}:${seconds.padStart(2, '0')}`;
-}
+import { toTimeSpanString } from '../../../core/utils/duration.util';
 
 @Component({
   selector: 'app-upload-song-modal',

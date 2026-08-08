@@ -33,7 +33,7 @@ export interface PlaylistDetail {
 }
 
 /** The subset of playlist fields PlaylistFormModal needs to pre-fill an edit — satisfied by both Playlist and PlaylistDetail. */
-export type PlaylistFormSeed = Pick<Playlist, 'id' | 'name' | 'description'>;
+export type PlaylistFormSeed = Pick<Playlist, 'id' | 'name' | 'description' | 'coverImagePath'>;
 
 /** Mirrors PlaylistManagement.Api.DTOs.Playlists.CreatePlaylistDto. */
 export interface CreatePlaylistRequest {

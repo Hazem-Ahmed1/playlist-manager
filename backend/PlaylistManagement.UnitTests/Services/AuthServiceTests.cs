@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Moq;
+using PlaylistManagement.Api.Common;
 using PlaylistManagement.Api.DTOs.Auth;
 using PlaylistManagement.Api.Interfaces;
-using PlaylistManagement.Api.Middleware.Exceptions;
 using PlaylistManagement.Api.Models;
 using PlaylistManagement.Api.Services;
 using PlaylistManagement.UnitTests.TestHelpers;
@@ -63,15 +63,16 @@ namespace PlaylistManagement.UnitTests.Services
 
             // Assert: a token comes back and the account was created as a
             // plain User (never self-registered as Admin).
-            result.Token.Should().Be("signed.jwt.token");
-            result.Email.Should().Be(dto.Email);
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Token.Should().Be("signed.jwt.token");
+            result.Value.Email.Should().Be(dto.Email);
             _userManager.Verify(m => m.CreateAsync(It.Is<ApplicationUser>(u => u.Email == dto.Email), dto.Password), Times.Once);
             _userManager.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), Roles.User), Times.Once);
         }
 
         // 2. Duplicate email registration fails.
         [Fact]
-        public async Task RegisterAsync_DuplicateEmail_ThrowsConflictException()
+        public async Task RegisterAsync_DuplicateEmail_ReturnsConflictFailure()
         {
             // Arrange
             var dto = new RegisterDto
@@ -86,10 +87,11 @@ namespace PlaylistManagement.UnitTests.Services
             _userManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(existingUser);
 
             // Act
-            var act = async () => await _sut.RegisterAsync(dto);
+            var result = await _sut.RegisterAsync(dto);
 
             // Assert
-            await act.Should().ThrowAsync<ConflictException>();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.Conflict);
             _userManager.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
         }
 
@@ -97,7 +99,7 @@ namespace PlaylistManagement.UnitTests.Services
         // policy failure surfaced by the store), which the service should
         // translate rather than let bubble as an IdentityResult.
         [Fact]
-        public async Task RegisterAsync_IdentityCreateFails_ThrowsBadRequestException()
+        public async Task RegisterAsync_IdentityCreateFails_ReturnsBadRequestFailure()
         {
             // Arrange
             var dto = new RegisterDto
@@ -114,10 +116,11 @@ namespace PlaylistManagement.UnitTests.Services
                 .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Password too weak." }));
 
             // Act
-            var act = async () => await _sut.RegisterAsync(dto);
+            var result = await _sut.RegisterAsync(dto);
 
             // Assert
-            await act.Should().ThrowAsync<BadRequestException>();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.BadRequest);
         }
 
         // 3. Login with valid credentials returns JWT.
@@ -141,12 +144,13 @@ namespace PlaylistManagement.UnitTests.Services
             var result = await _sut.LoginAsync(dto);
 
             // Assert
-            result.Token.Should().Be("signed.jwt.token");
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Token.Should().Be("signed.jwt.token");
         }
 
         // 4. Login with invalid password fails.
         [Fact]
-        public async Task LoginAsync_InvalidPassword_ThrowsUnauthorizedAccessException()
+        public async Task LoginAsync_InvalidPassword_ReturnsUnauthorizedFailure()
         {
             // Arrange
             var dto = new LoginDto { Email = "ada@example.com", Password = "WrongPassword1!" };
@@ -158,26 +162,29 @@ namespace PlaylistManagement.UnitTests.Services
                 .ReturnsAsync(SignInResult.Failed);
 
             // Act
-            var act = async () => await _sut.LoginAsync(dto);
+            var result = await _sut.LoginAsync(dto);
 
-            // Assert
-            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+            // Assert: wrong credentials are an expected outcome, reported as
+            // a failed Result rather than an exception.
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.Unauthorized);
         }
 
         // 5. Login with unknown email fails.
         [Fact]
-        public async Task LoginAsync_UnknownEmail_ThrowsUnauthorizedAccessException()
+        public async Task LoginAsync_UnknownEmail_ReturnsUnauthorizedFailure()
         {
             // Arrange
             var dto = new LoginDto { Email = "ghost@example.com", Password = "Whatever1!" };
             _userManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync((ApplicationUser?)null);
 
             // Act
-            var act = async () => await _sut.LoginAsync(dto);
+            var result = await _sut.LoginAsync(dto);
 
-            // Assert: same generic message/exception as a wrong password —
-            // never reveal whether the email exists.
-            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+            // Assert: same generic failure as a wrong password — never
+            // reveal whether the email exists.
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.Unauthorized);
             _signInManager.Verify(s => s.CheckPasswordSignInAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         }
     }

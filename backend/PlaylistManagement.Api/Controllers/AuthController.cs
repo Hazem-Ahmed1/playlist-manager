@@ -25,10 +25,14 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var response = await _authService.RegisterAsync(dto);
+            var result = await _authService.RegisterAsync(dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return StatusCode(StatusCodes.Status201Created,
-                ApiResponse<AuthResponseDto>.Ok(response, "Account created successfully."));
+                ApiResponse<AuthResponseDto>.Ok(result.Value!, "Account created successfully."));
         }
 
         /// <summary>Verifies credentials and returns a JWT.</summary>
@@ -37,9 +41,13 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var response = await _authService.LoginAsync(dto);
+            var result = await _authService.LoginAsync(dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
-            return Ok(ApiResponse<AuthResponseDto>.Ok(response, "Login successful."));
+            return Ok(ApiResponse<AuthResponseDto>.Ok(result.Value!, "Login successful."));
         }
     }
 }

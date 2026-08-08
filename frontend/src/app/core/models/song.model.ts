@@ -39,3 +39,12 @@ export interface UploadSongRequest {
   duration?: string | null;
   file: File;
 }
+
+/** Mirrors PlaylistManagement.Api.DTOs.Songs.UpdateSongDto. No file — metadata only. */
+export interface UpdateSongRequest {
+  title: string;
+  artist: string;
+  album?: string | null;
+  genre?: string | null;
+  duration?: string | null;
+}

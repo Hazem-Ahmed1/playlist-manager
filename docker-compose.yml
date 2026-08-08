@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "PlaylistManager!2026"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: PlaylistManagement.Api/Dockerfile
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PlaylistManagementDb;User Id=sa;Password=PlaylistManager!2026;TrustServerCertificate=True;"
+      Jwt__Issuer: "PlaylistManagement.Api"
+      Jwt__Audience: "PlaylistManagement.Client"
+      Jwt__Key: "REPLACE_WITH_A_LOCAL_DEV_SECRET_AT_LEAST_32_CHARS_LONG"
+      Jwt__ExpiryMinutes: "60"
+      Cors__AllowedOrigins__0: "http://localhost:4300"
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-uploads:/app/wwwroot/uploads
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "4300:80"
+    depends_on:
+      - backend
+
+volumes:
+  sqlserver-data:
+  backend-uploads:

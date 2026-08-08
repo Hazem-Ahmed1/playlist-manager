@@ -23,11 +23,11 @@ namespace PlaylistManagement.Api.Repositories
                 .OrderBy(s => s.Title)
                 .ToListAsync();
 
-        public Task<bool> ExistsAsync(int id) =>
-            _context.Songs.AnyAsync(s => s.Id == id);
-
         public async Task AddAsync(Song song) =>
             await _context.Songs.AddAsync(song);
+
+        public void Update(Song song) =>
+            _context.Songs.Update(song);
 
         public void Remove(Song song) =>
             _context.Songs.Remove(song);

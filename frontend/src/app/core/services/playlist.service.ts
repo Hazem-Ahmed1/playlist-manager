@@ -37,6 +37,14 @@ export class PlaylistService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  uploadCover(id: number, file: File): Observable<Playlist> {
+    const formData = new FormData();
+    formData.append('File', file);
+    return this.http
+      .post<ApiResponse<Playlist>>(`${this.baseUrl}/${id}/cover`, formData)
+      .pipe(map((res) => res.data));
+  }
+
   addSong(playlistId: number, songId: number): Observable<void> {
     const body: AddSongToPlaylistRequest = { songId };
     return this.http

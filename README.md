@@ -12,8 +12,9 @@ A full-stack playlist management application: users create playlists and build t
 - [Business Requirements](#business-requirements)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Project Structure](#project-structure)
+- [Database Documentation](#database-documentation)
 - [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
 - [Running the Project](#running-the-project)
 - [Demo Accounts](#demo-accounts)
 - [API Overview](#api-overview)
@@ -32,14 +33,16 @@ A full-stack playlist management application: users create playlists and build t
 
 **Delivered beyond the core requirements:**
 - Update and delete playlists
-- Remove songs from a playlist
-- Cover image upload per playlist
-- A shared song catalog, browsable by anyone (public), with a search-while-adding picker
-- Admin role that can upload and delete songs in the catalog (regular users cannot)
+- **Duplicate playlist names are rejected** — a user can't have two playlists with the same name 
+- **Optional cover image upload per playlist** — pick an image when creating/editing a playlist (`.jpg`/`.jpeg`/`.png`/`.webp`, max 5 MB); it's saved under `wwwroot/uploads/covers` and shown as the playlist's thumbnail everywhere for easier configurations
+- A shared song catalog, browsable by anyone (public)
+- Admin role that can upload, edit, and delete songs in the catalog (regular users cannot). Clicking a song row in the admin Catalog opens a modal to update its metadata, delete it, or play it directly in the audio player
+- The audio player tracks a queue of whatever song list you were browsing, so **Next/Previous actually step through it**
 - JWT authentication (register/login) with role-based authorization
 - Real audio playback of uploaded tracks from a persistent bottom player
 - Data Annotation validation matching between frontend and backend (identical rules, identical messages)
 - Unit tests (service layer, mocked dependencies) and integration tests (full HTTP pipeline against a real SQLite database)
+- Dockerized: one `docker compose up` runs SQL Server, the API, and the Angular app together, with named volumes for the database and uploaded files
 
 ---
 
@@ -95,43 +98,58 @@ Route guards (`authGuard`, `adminGuard`) are functional guards; `adminGuard` dec
 
 ---
 
-## Project Structure
+## Database Documentation
 
-```
-playlist-manager/
-├── backend/
-│   ├── PlaylistManagement.Api/          # the API
-│   │   ├── Controllers/
-│   │   ├── Services/
-│   │   ├── Repositories/
-│   │   ├── Interfaces/
-│   │   ├── Models/                      # entities + Options + Roles
-│   │   ├── DTOs/
-│   │   ├── Data/                        # DbContext, Fluent configurations, DataSeeder
-│   │   ├── Migrations/
-│   │   ├── Middleware/                  # exception handling + custom exceptions
-│   │   ├── Validation/                  # custom Data Annotation attributes
-│   │   └── wwwroot/uploads/             # song files + playlist cover images
-│   ├── PlaylistManagement.UnitTests/
-│   └── PlaylistManagement.IntegrationTests/
-├── frontend/
-│   └── src/app/
-│       ├── core/                        # services, models, guards, interceptors, validators
-│       ├── layout/                      # sidebar, audio player, app shell
-│       ├── shared/                      # reusable components
-│       └── features/                    # routed pages (home, songs, playlists, catalog, auth, errors)
-└── docs/
-    └── screenshots/                     # see Screenshots section
-```
+Full documentation for this database is three things: the story below, an ERD, and a schema diagram. For the underlying ER concepts behind them (entities, attributes, cardinality, participation, notation) and how they were worked out from the story, see [`docs/database-documentation-guide.md`](docs/database-documentation-guide.md).
 
----
+### The story
+
+• Each user has one or many playlists — but each playlist belongs to exactly one user. 
+
+• Each playlist has one or many songs, and each song can belong to one or many playlists - a many-to-many relationship.
+
+• Each song belongs to exactly one shared catalog - songs are not owned by any single user or playlist. 
+
+• Each playlist–song pairing carries its own data: the date the song was added to that playlist, and the song's 
+order/position within that playlist. 
+
+Songs live in a single shared catalog and are visible to every user. A user builds a playlist by selecting existing 
+songs from that catalog and attaching them to their playlist - songs are not uploaded per playlist or per user. 
+Because the same song can sit inside many different playlists at once, and a playlist obviously holds many songs, 
+the relationship between Playlist and Song is many-to-many. A plain foreign key cannot represent this, so the 
+relationship is implemented through a junction table, PlaylistSong, which resolves the many-to-many relationship  
+Deleting a user deletes their playlists, since nothing else in the database references a user directly. Deleting a 
+playlist only removes its song associations (its rows in PlaylistSong) - the songs themselves remain untouched in 
+the catalog, since other users' playlists may still reference them. Likewise, deleting a song from the catalog only 
+removes its associations from whatever playlists contained it; it does not delete those playlists. 
+
+
+### Entity-Relationship Diagram (ERD)
+
+![Entity-Relationship Diagram](docs/database/ER%20Diagram.png)
+
+### Schema Diagram
+
+![Database Schema](docs/database/Schema.png)
 
 ## Prerequisites
 
+
+**running locally:**
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - SQL Server (a local instance, LocalDB, or a named instance — anything reachable from your connection string)
 - [Node.js](https://nodejs.org/) 20+ and npm
 - Angular CLI (`npm install -g @angular/cli`) — optional, `npx` works without a global install
+
+
+---
+
+## Getting Started
+
+```bash
+git clone https://github.com/Hazem-Ahmed1/playlist-manager.git
+cd playlist-manager
+```
 
 ---
 
@@ -145,19 +163,16 @@ cd backend
 # Restore the local dotnet-ef tool (used for migrations)
 dotnet tool restore
 
-# Point the connection string at your SQL Server instance
-# Edit PlaylistManagement.Api/appsettings.Development.json → ConnectionStrings:DefaultConnection
-
-# Create the database and apply all migrations
-dotnet ef database update --project PlaylistManagement.Api --startup-project PlaylistManagement.Api
-
-# Run the API (also seeds Identity roles + demo accounts, see below)
+# Run the API — applies pending migrations and seeds demo data automatically at startup
 dotnet run --project PlaylistManagement.Api --launch-profile https
 ```
 
-The API starts on `https://localhost:7019` (and `http://localhost:5074`). Swagger UI opens automatically at `/swagger`.
+The API starts on `https://localhost:7019` (and `http://localhost:5074`). Swagger UI opens automatically at `/swagger`. Migrations apply themselves on startup, so there's no separate `dotnet ef database update` step to run first — though you can still run one manually if you'd rather create the database ahead of time.
 
-> **JWT signing key:** `appsettings.Development.json` ships with a placeholder key. Replace `Jwt:Key` with your own local secret (32+ characters) — never commit a real production secret.
+> **Credentials you may need to change**, both in `PlaylistManagement.Api/appsettings.Development.json`:
+>
+> - **`ConnectionStrings:DefaultConnection`** — ships as `Server=localhost;Database=PlaylistManagementDb;Trusted_Connection=True;TrustServerCertificate=True;`. That works out of the box for a default local SQL Server instance; point `Server=` elsewhere if yours is different — e.g. `Server=(localdb)\mssqllocaldb;...` or `Server=YOUR-MACHINE-NAME;...` for a named instance. `Trusted_Connection=True` uses your current Windows login; switch to `User Id=...;Password=...;` instead if your instance uses SQL authentication.
+> - **`Jwt:Key`** — ships with a working (but shared, and therefore insecure) 32+ character key so the project runs out of the box. Swap in your own local secret if you want tokens that are actually private to your machine. (`appsettings.json`, used outside the Development environment, instead ships a literal `REPLACE_WITH_A_LOCAL_DEV_SECRET...` placeholder — replace it with a real secret before running under any non-Development environment, since this file is committed to source control and its value is public.)
 
 ### 2. Frontend
 
@@ -205,6 +220,7 @@ All endpoints are prefixed `/api`. Full interactive documentation (with request/
 | GET | `/songs` | — | Public catalog browse |
 | GET | `/songs/{id}` | — | Public |
 | POST | `/songs` | Admin | Multipart upload |
+| PUT | `/songs/{id}` | Admin | Metadata only (title/artist/album/genre/duration) — no file |
 | DELETE | `/songs/{id}` | Admin | Also deletes the audio file on disk |
 | GET | `/playlists` | User | Current user's playlists |
 | GET | `/playlists/{id}` | User (owner) | Includes songs |
@@ -239,15 +255,13 @@ Unit tests mock every dependency (no database). Integration tests boot the real 
 
 ## Screenshots
 
-*(placeholders — screenshots to be added)*
-
 | Home | Login | Register |
 |---|---|---|
 | ![Home](docs/screenshots/home.png) | ![Login](docs/screenshots/login.png) | ![Register](docs/screenshots/register.png) |
 
-| My Playlists | Playlist Detail | Catalog Admin |
-|---|---|---|
-| ![My Playlists](docs/screenshots/playlists.png) | ![Playlist Detail](docs/screenshots/playlist-detail.png) | ![Catalog Admin](docs/screenshots/catalog.png) |
+| My Playlists | Catalog Admin |
+|---|---|
+| ![My Playlists](docs/screenshots/playlists.png) | ![Catalog Admin](docs/screenshots/catalog.png) |
 
 ---
 

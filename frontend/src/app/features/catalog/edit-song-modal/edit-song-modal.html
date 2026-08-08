@@ -1,0 +1,122 @@
+<div class="modal-backdrop-app fade-in" (click)="close()"></div>
+
+<div class="modal-app-wrapper" role="dialog" aria-modal="true" aria-labelledby="edit-song-title">
+  <div class="modal-app-dialog edit-song-dialog">
+    <button type="button" class="modal-close-btn" (click)="close()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <span class="modal-icon mb-0">
+        <i class="fa-solid fa-music"></i>
+      </span>
+      <button type="button" class="btn-app-outline play-btn-inline" (click)="play()">
+        <i class="fa-solid fa-play"></i>
+        <span>Play</span>
+      </button>
+    </div>
+
+    <h2 id="edit-song-title">Edit song</h2>
+    <p class="modal-subtitle">Update this track's details, play it, or remove it from the catalog.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="edit-title">Title</label>
+            <input
+              id="edit-title"
+              type="text"
+              class="field-control"
+              formControlName="title"
+              [class.is-invalid]="form.controls.title.invalid && form.controls.title.touched"
+            />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.title.errors?.['required']) {
+                  <span class="error">{{ messages.titleRequired }}</span>
+                } @else if (form.controls.title.errors?.['maxlength']) {
+                  <span class="error">{{ messages.titleMaxLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="field-group mb-0">
+            <label class="field-label" for="edit-artist">Artist</label>
+            <input
+              id="edit-artist"
+              type="text"
+              class="field-control"
+              formControlName="artist"
+              [class.is-invalid]="form.controls.artist.invalid && form.controls.artist.touched"
+            />
+            @if (form.controls.artist.touched && form.controls.artist.invalid) {
+              <div class="field-feedback">
+                @if (form.controls.artist.errors?.['required']) {
+                  <span class="error">{{ messages.artistRequired }}</span>
+                } @else if (form.controls.artist.errors?.['maxlength']) {
+                  <span class="error">{{ messages.artistMaxLength }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-0">
+        <div class="col-sm-4">
+          <div class="field-group mb-0">
+            <label class="field-label" for="edit-album">Album</label>
+            <input id="edit-album" type="text" class="field-control" formControlName="album" />
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="field-group mb-0">
+            <label class="field-label" for="edit-genre">Genre</label>
+            <input id="edit-genre" type="text" class="field-control" formControlName="genre" />
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="field-group mb-0">
+            <label class="field-label" for="edit-duration">Duration (mm:ss)</label>
+            <input id="edit-duration" type="text" class="field-control" formControlName="duration" placeholder="3:45" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions d-flex justify-content-between gap-2">
+        <button type="button" class="btn-app-outline danger-outline" [disabled]="isDeleting()" (click)="showDeleteConfirm.set(true)">
+          @if (isDeleting()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          } @else {
+            <i class="fa-solid fa-trash"></i>
+          }
+          <span>Delete</span>
+        </button>
+
+        <div class="d-flex gap-2">
+          <button type="button" class="btn-app-outline" (click)="close()">Cancel</button>
+          <button type="submit" class="btn-app-primary" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <i class="fa-solid fa-spinner fa-spin"></i>
+            }
+            <span>Save changes</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+@if (showDeleteConfirm()) {
+  <app-confirm-modal
+    title="Delete this song?"
+    [message]="'This removes \'' + song().title + '\' and its audio file. This cannot be undone.'"
+    confirmLabel="Delete"
+    (confirmed)="confirmDelete()"
+    (cancelled)="showDeleteConfirm.set(false)"
+  />
+}

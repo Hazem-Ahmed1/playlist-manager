@@ -1,16 +1,18 @@
 using System.Net;
 using System.Text.Json;
 using PlaylistManagement.Api.DTOs.Common;
-using PlaylistManagement.Api.Middleware.Exceptions;
 
 namespace PlaylistManagement.Api.Middleware
 {
     /// <summary>
-    /// Catches any exception that escapes the pipeline and turns it into the
-    /// same { success, message, errors } envelope used for validation
-    /// failures, so callers never have to parse two different error shapes.
-    /// Maps a few common exception types to sensible status codes; anything
-    /// unrecognized falls back to 500.
+    /// Safety net for exceptions that escape the pipeline. Expected
+    /// business-rule failures (not found, forbidden, duplicate name, wrong
+    /// credentials, ...) never reach here — services report those via
+    /// Result/Result&lt;T&gt;, handled directly in the controllers
+    /// (ApiControllerBase.FromError). Anything that does land here is either
+    /// a genuine bug or a framework-level exception (a bad claim, a DB
+    /// failure), so a small set of BCL exception types still get mapped to a
+    /// sensible status code; anything unrecognized falls back to 500.
     /// </summary>
     public class ExceptionHandlingMiddleware
     {
@@ -40,10 +42,6 @@ namespace PlaylistManagement.Api.Middleware
         {
             var (statusCode, message) = exception switch
             {
-                NotFoundException => (HttpStatusCode.NotFound, exception.Message),
-                ForbiddenAccessException => (HttpStatusCode.Forbidden, exception.Message),
-                ConflictException => (HttpStatusCode.Conflict, exception.Message),
-                BadRequestException => (HttpStatusCode.BadRequest, exception.Message),
                 KeyNotFoundException => (HttpStatusCode.NotFound, exception.Message),
                 UnauthorizedAccessException => (HttpStatusCode.Unauthorized, exception.Message),
                 ArgumentException => (HttpStatusCode.BadRequest, exception.Message),

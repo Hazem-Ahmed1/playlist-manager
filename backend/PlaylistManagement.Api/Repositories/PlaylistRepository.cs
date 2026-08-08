@@ -29,6 +29,20 @@ namespace PlaylistManagement.Api.Repositories
                     .ThenInclude(ps => ps.Song)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
+        // Explicit ToLower() on both sides rather than relying on the
+        // database's default collation — SQL Server is case-insensitive by
+        // default but SQLite (used in integration tests) isn't, so this
+        // keeps behavior consistent across both.
+        public Task<bool> ExistsByNameAsync(string userId, string name, int? excludePlaylistId = null)
+        {
+            var normalizedName = name.ToLower();
+
+            return _context.Playlists.AnyAsync(p =>
+                p.UserId == userId &&
+                p.Name.ToLower() == normalizedName &&
+                (excludePlaylistId == null || p.Id != excludePlaylistId));
+        }
+
         public async Task<IReadOnlyList<Playlist>> GetByUserIdAsync(string userId) =>
             await _context.Playlists
                 .Include(p => p.PlaylistSongs)

@@ -40,6 +40,15 @@
   background: var(--surface-2);
 }
 
+.catalog-row {
+  cursor: pointer;
+}
+
+.catalog-row:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: -2px;
+}
+
 .catalog-cover {
   width: 42px;
   height: 42px;

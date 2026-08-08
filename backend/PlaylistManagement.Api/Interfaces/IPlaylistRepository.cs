@@ -18,6 +18,13 @@ namespace PlaylistManagement.Api.Interfaces
         /// <summary>Gets every playlist owned by the given user, most recently created first.</summary>
         Task<IReadOnlyList<Playlist>> GetByUserIdAsync(string userId);
 
+        /// <summary>
+        /// Checks whether the user already has a playlist with this name
+        /// (case-insensitive). Pass excludePlaylistId when checking during
+        /// a rename, so a playlist doesn't collide with its own name.
+        /// </summary>
+        Task<bool> ExistsByNameAsync(string userId, string name, int? excludePlaylistId = null);
+
         /// <summary>Tracks a new playlist for insertion.</summary>
         Task AddAsync(Playlist playlist);
 

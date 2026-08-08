@@ -1,0 +1,19 @@
+.edit-song-dialog {
+  max-width: 560px;
+}
+
+.play-btn-inline {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.danger-outline {
+  color: var(--danger-light);
+  border-color: var(--danger);
+}
+
+.danger-outline:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: var(--danger);
+  color: var(--danger-light);
+}

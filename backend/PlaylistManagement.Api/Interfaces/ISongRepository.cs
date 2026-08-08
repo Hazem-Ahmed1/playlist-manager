@@ -13,11 +13,11 @@ namespace PlaylistManagement.Api.Interfaces
         /// <summary>Gets every song in the catalog, alphabetical by title.</summary>
         Task<IReadOnlyList<Song>> GetAllAsync();
 
-        /// <summary>Checks whether a song with the given id exists.</summary>
-        Task<bool> ExistsAsync(int id);
-
         /// <summary>Tracks a new song for insertion.</summary>
         Task AddAsync(Song song);
+
+        /// <summary>Marks an existing song as modified.</summary>
+        void Update(Song song);
 
         /// <summary>Tracks a song for removal.</summary>
         void Remove(Song song);

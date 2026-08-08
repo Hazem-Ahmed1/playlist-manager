@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -22,6 +23,7 @@ export class LoginModal {
   private readonly modal = inject(ModalService);
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly messages = { email: EMAIL_MESSAGES, password: PASSWORD_MESSAGES };
   readonly isSubmitting = signal(false);
@@ -54,7 +56,10 @@ export class LoginModal {
     this.isSubmitting.set(true);
     const credentials = this.form.getRawValue();
 
-    this.authService.login(credentials).subscribe({
+    this.authService
+      .login(credentials)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.toast.success('Login successful.');

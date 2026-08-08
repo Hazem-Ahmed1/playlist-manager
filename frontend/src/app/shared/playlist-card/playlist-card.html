@@ -8,8 +8,8 @@
   (keydown.space)="open.emit()"
 >
   <div class="playlist-cover">
-    @if (playlist().coverImagePath) {
-      <img [ngSrc]="playlist().coverImagePath!" fill alt="" />
+    @if (coverUrl(); as url) {
+      <img [src]="url" alt="" />
     } @else {
       <i class="fa-solid fa-guitar"></i>
     }

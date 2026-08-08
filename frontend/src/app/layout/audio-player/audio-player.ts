@@ -1,15 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import { PlayerStateService } from '../../core/services/player-state.service';
 import { resolveMediaUrl } from '../../core/utils/media-url.util';
-
-function formatSeconds(totalSeconds: number): string {
-  if (!Number.isFinite(totalSeconds) || totalSeconds < 0) {
-    return '0:00';
-  }
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+import { formatDurationDisplay, formatSecondsCompact } from '../../core/utils/duration.util';
 
 @Component({
   selector: 'app-audio-player',
@@ -18,7 +10,7 @@ function formatSeconds(totalSeconds: number): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AudioPlayer {
-  private readonly playerState = inject(PlayerStateService);
+  readonly playerState = inject(PlayerStateService);
   private readonly audioRef = viewChild.required<ElementRef<HTMLAudioElement>>('audioEl');
 
   readonly song = this.playerState.currentSong;
@@ -59,11 +51,16 @@ export class AudioPlayer {
   }
 
   formattedProgress(): string {
-    return formatSeconds(this.currentTimeSeconds());
+    return formatSecondsCompact(this.currentTimeSeconds());
   }
 
   formattedDuration(): string {
-    return this.durationSeconds() > 0 ? formatSeconds(this.durationSeconds()) : (this.song()?.duration ?? '0:00');
+    const song = this.song();
+    return this.durationSeconds() > 0
+      ? formatSecondsCompact(this.durationSeconds())
+      : song
+        ? formatDurationDisplay(song.duration)
+        : '0:00';
   }
 
   togglePlay(): void {

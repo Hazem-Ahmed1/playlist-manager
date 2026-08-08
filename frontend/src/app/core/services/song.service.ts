@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { Song, UploadSongRequest } from '../models/song.model';
+import { Song, UpdateSongRequest, UploadSongRequest } from '../models/song.model';
 
 /** Calls the /api/songs endpoints — browsing is public, upload/delete are Admin-only (enforced server-side; the UI just hides them). */
 @Injectable({ providedIn: 'root' })
@@ -35,6 +35,10 @@ export class SongService {
     formData.append('File', payload.file);
 
     return this.http.post<ApiResponse<Song>>(this.baseUrl, formData).pipe(map((res) => res.data));
+  }
+
+  update(id: number, payload: UpdateSongRequest): Observable<Song> {
+    return this.http.put<ApiResponse<Song>>(`${this.baseUrl}/${id}`, payload).pipe(map((res) => res.data));
   }
 
   delete(id: number): Observable<void> {

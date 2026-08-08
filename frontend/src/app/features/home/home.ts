@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { PlaylistSection } from '../../shared/playlist-section/playlist-section';
 import { SongTable } from '../../shared/song-table/song-table';
@@ -27,6 +28,7 @@ export class Home {
   private readonly songService = inject(SongService);
   private readonly modal = inject(ModalService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly authState = inject(AuthStateService);
   readonly playerState = inject(PlayerStateService);
@@ -40,13 +42,16 @@ export class Home {
   readonly pendingDeletePlaylist = signal<Playlist | null>(null);
 
   constructor() {
-    this.songService.getAll().subscribe({
-      next: (songs) => {
-        this.songs.set(songs);
-        this.isLoadingSongs.set(false);
-      },
-      error: () => this.isLoadingSongs.set(false),
-    });
+    this.songService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (songs) => {
+          this.songs.set(songs);
+          this.isLoadingSongs.set(false);
+        },
+        error: () => this.isLoadingSongs.set(false),
+      });
 
     // Swap between the demo card and the user's real playlists the moment
     // they log in or out, without needing a page refresh.
@@ -60,14 +65,17 @@ export class Home {
   }
 
   private loadPlaylists(): void {
-    this.playlistService.getMyPlaylists().subscribe({
-      next: (playlists) => this.playlists.set(playlists),
-      error: () => this.toast.error('Failed to load your playlists.'),
-    });
+    this.playlistService
+      .getMyPlaylists()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (playlists) => this.playlists.set(playlists),
+        error: () => this.toast.error('Failed to load your playlists.'),
+      });
   }
 
   onSongSelected(song: Song): void {
-    this.playerState.play(song);
+    this.playerState.play(song, this.songs());
   }
 
   onOpenPlaylist(playlist: Playlist): void {
@@ -119,12 +127,15 @@ export class Home {
       return;
     }
 
-    this.playlistService.delete(playlist.id).subscribe({
-      next: () => {
-        this.playlists.update((list) => list.filter((p) => p.id !== playlist.id));
-        this.toast.success('Playlist deleted successfully.');
-      },
-      error: () => this.toast.error('Failed to delete the playlist.'),
-    });
+    this.playlistService
+      .delete(playlist.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.playlists.update((list) => list.filter((p) => p.id !== playlist.id));
+          this.toast.success('Playlist deleted successfully.');
+        },
+        error: () => this.toast.error('Failed to delete the playlist.'),
+      });
   }
 }

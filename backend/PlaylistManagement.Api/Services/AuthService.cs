@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
+using PlaylistManagement.Api.Common;
 using PlaylistManagement.Api.DTOs.Auth;
 using PlaylistManagement.Api.Interfaces;
-using PlaylistManagement.Api.Middleware.Exceptions;
 using PlaylistManagement.Api.Models;
 
 namespace PlaylistManagement.Api.Services
@@ -23,12 +23,12 @@ namespace PlaylistManagement.Api.Services
             _tokenService = tokenService;
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
+        public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterDto dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser is not null)
             {
-                throw new ConflictException("An account with this email already exists.");
+                return Result<AuthResponseDto>.Failure(ErrorType.Conflict, "An account with this email already exists.");
             }
 
             var user = new ApplicationUser
@@ -40,11 +40,11 @@ namespace PlaylistManagement.Api.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded)
+            var identityResult = await _userManager.CreateAsync(user, dto.Password);
+            if (!identityResult.Succeeded)
             {
-                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
-                throw new BadRequestException(errors);
+                var errors = string.Join(" ", identityResult.Errors.Select(e => e.Description));
+                return Result<AuthResponseDto>.Failure(ErrorType.BadRequest, errors);
             }
 
             // Every self-registered account is a plain user; Admin is only
@@ -52,21 +52,26 @@ namespace PlaylistManagement.Api.Services
             // public endpoint.
             await _userManager.AddToRoleAsync(user, Roles.User);
 
-            return await BuildAuthResponseAsync(user);
+            var response = await BuildAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
         }
 
-        public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
+        public async Task<Result<AuthResponseDto>> LoginAsync(LoginDto dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email)
-                ?? throw new UnauthorizedAccessException("Invalid email or password.");
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
-            if (!result.Succeeded)
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user is null)
             {
-                throw new UnauthorizedAccessException("Invalid email or password.");
+                return Result<AuthResponseDto>.Failure(ErrorType.Unauthorized, "Invalid email or password.");
             }
 
-            return await BuildAuthResponseAsync(user);
+            var signInResult = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
+            if (!signInResult.Succeeded)
+            {
+                return Result<AuthResponseDto>.Failure(ErrorType.Unauthorized, "Invalid email or password.");
+            }
+
+            var response = await BuildAuthResponseAsync(user);
+            return Result<AuthResponseDto>.Success(response);
         }
 
         private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user)

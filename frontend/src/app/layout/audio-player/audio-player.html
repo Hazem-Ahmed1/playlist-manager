@@ -22,14 +22,12 @@
         <p class="track-artist text-truncate">Pick a track to start</p>
       }
     </div>
-    <button type="button" class="icon-btn favorite-btn" [disabled]="!song()" aria-label="Favorite">
-      <i class="fa-regular fa-heart"></i>
-    </button>
+
   </div>
 
   <div class="player-center d-flex flex-column align-items-center">
     <div class="player-controls d-flex align-items-center gap-3">
-      <button type="button" class="icon-btn" [disabled]="!song()" aria-label="Previous track">
+      <button type="button" class="icon-btn" [disabled]="!playerState.hasPrevious()" (click)="playerState.previous()" aria-label="Previous track">
         <i class="fa-solid fa-backward-step"></i>
       </button>
       <button
@@ -41,7 +39,7 @@
       >
         <i class="fa-solid" [class.fa-pause]="isPlaying()" [class.fa-play]="!isPlaying()"></i>
       </button>
-      <button type="button" class="icon-btn" [disabled]="!song()" aria-label="Next track">
+      <button type="button" class="icon-btn" [disabled]="!playerState.hasNext()" (click)="playerState.next()" aria-label="Next track">
         <i class="fa-solid fa-forward-step"></i>
       </button>
     </div>

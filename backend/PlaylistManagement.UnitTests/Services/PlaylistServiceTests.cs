@@ -1,9 +1,10 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using PlaylistManagement.Api.Common;
 using PlaylistManagement.Api.DTOs.Playlists;
 using PlaylistManagement.Api.Interfaces;
-using PlaylistManagement.Api.Middleware.Exceptions;
+using PlaylistManagement.Api.Mapping;
 using PlaylistManagement.Api.Models;
 using PlaylistManagement.Api.Services;
 using Xunit;
@@ -13,7 +14,8 @@ namespace PlaylistManagement.UnitTests.Services
     /// <summary>
     /// PlaylistService unit tests. All dependencies (IPlaylistRepository,
     /// ISongRepository, IFileStorageService) are mocked — no database, no
-    /// file system access.
+    /// file system access. PlaylistMapper is used as a real instance since
+    /// it's pure mapping logic, not a collaborator worth mocking.
     /// </summary>
     public class PlaylistServiceTests
     {
@@ -24,7 +26,7 @@ namespace PlaylistManagement.UnitTests.Services
 
         public PlaylistServiceTests()
         {
-            _sut = new PlaylistService(_playlistRepository.Object, _songRepository.Object, _fileStorageService.Object);
+            _sut = new PlaylistService(_playlistRepository.Object, _songRepository.Object, _fileStorageService.Object, new PlaylistMapper());
         }
 
         // 1. Create Playlist successfully.
@@ -40,9 +42,10 @@ namespace PlaylistManagement.UnitTests.Services
 
             // Assert: the returned DTO reflects the input, and the new
             // playlist was actually handed to the repository for insertion.
-            result.Name.Should().Be(dto.Name);
-            result.Description.Should().Be(dto.Description);
-            result.SongCount.Should().Be(0);
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Name.Should().Be(dto.Name);
+            result.Value.Description.Should().Be(dto.Description);
+            result.Value.SongCount.Should().Be(0);
 
             _playlistRepository.Verify(r => r.AddAsync(It.Is<Playlist>(p => p.Name == dto.Name && p.UserId == userId)), Times.Once);
             _playlistRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
@@ -52,8 +55,9 @@ namespace PlaylistManagement.UnitTests.Services
         // PlaylistService trusts the caller-supplied userId (ownership is
         // established by the JWT, not re-validated here) — so "invalid
         // user" surfaces as a persistence failure (e.g. a foreign key
-        // violation against AspNetUsers), not a service-level guard. This
-        // verifies that failure isn't swallowed.
+        // violation against AspNetUsers), which is a genuinely unexpected
+        // failure, not a business-rule Result — so it still propagates as
+        // an exception rather than being swallowed.
         [Fact]
         public async Task CreatePlaylistAsync_PersistenceFailsForInvalidUser_PropagatesException()
         {
@@ -97,17 +101,18 @@ namespace PlaylistManagement.UnitTests.Services
 
         // 4. User cannot access another user's playlist.
         [Fact]
-        public async Task GetPlaylistByIdAsync_PlaylistOwnedByAnotherUser_ThrowsForbiddenAccessException()
+        public async Task GetPlaylistByIdAsync_PlaylistOwnedByAnotherUser_ReturnsForbiddenFailure()
         {
             // Arrange
             var playlist = new Playlist { Id = 5, Name = "Private", UserId = "owner", PlaylistSongs = new List<PlaylistSong>() };
             _playlistRepository.Setup(r => r.GetByIdWithSongsAsync(5)).ReturnsAsync(playlist);
 
             // Act
-            var act = async () => await _sut.GetPlaylistByIdAsync("someone-else", 5);
+            var result = await _sut.GetPlaylistByIdAsync("someone-else", 5);
 
             // Assert
-            await act.Should().ThrowAsync<ForbiddenAccessException>();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.Forbidden);
         }
 
         // 5. Update playlist successfully.
@@ -125,8 +130,9 @@ namespace PlaylistManagement.UnitTests.Services
             var result = await _sut.UpdatePlaylistAsync(userId, 7, dto);
 
             // Assert
-            result.Name.Should().Be("New Name");
-            result.Description.Should().Be("New description");
+            result.IsSuccess.Should().BeTrue();
+            result.Value!.Name.Should().Be("New Name");
+            result.Value.Description.Should().Be("New description");
             _playlistRepository.Verify(r => r.Update(playlist), Times.Once);
             _playlistRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
@@ -148,26 +154,28 @@ namespace PlaylistManagement.UnitTests.Services
             _playlistRepository.Setup(r => r.GetByIdAsync(9)).ReturnsAsync(playlist);
 
             // Act
-            await _sut.DeletePlaylistAsync(userId, 9);
+            var result = await _sut.DeletePlaylistAsync(userId, 9);
 
             // Assert: cover file cleanup happens, then the row is removed.
+            result.IsSuccess.Should().BeTrue();
             _fileStorageService.Verify(f => f.DeleteFile("uploads/coverPath/abc.png"), Times.Once);
             _playlistRepository.Verify(r => r.Remove(playlist), Times.Once);
             _playlistRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
-        // 7. Delete non-existing playlist throws NotFoundException.
+        // 7. Delete non-existing playlist fails with NotFound.
         [Fact]
-        public async Task DeletePlaylistAsync_PlaylistDoesNotExist_ThrowsNotFoundException()
+        public async Task DeletePlaylistAsync_PlaylistDoesNotExist_ReturnsNotFoundFailure()
         {
             // Arrange
             _playlistRepository.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Playlist?)null);
 
             // Act
-            var act = async () => await _sut.DeletePlaylistAsync("user-1", 999);
+            var result = await _sut.DeletePlaylistAsync("user-1", 999);
 
             // Assert
-            await act.Should().ThrowAsync<NotFoundException>();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.NotFound);
             _playlistRepository.Verify(r => r.Remove(It.IsAny<Playlist>()), Times.Never);
         }
 
@@ -192,16 +200,17 @@ namespace PlaylistManagement.UnitTests.Services
             var dto = new AddSongToPlaylistDto { SongId = 42 };
 
             // Act
-            await _sut.AddSongToPlaylistAsync(userId, 3, dto);
+            var result = await _sut.AddSongToPlaylistAsync(userId, 3, dto);
 
             // Assert
+            result.IsSuccess.Should().BeTrue();
             _playlistRepository.Verify(r => r.AddSongAsync(It.Is<PlaylistSong>(ps => ps.PlaylistId == 3 && ps.SongId == 42)), Times.Once);
             _playlistRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
         // Edge case: adding a song already in the same playlist is rejected.
         [Fact]
-        public async Task AddSongToPlaylistAsync_SongAlreadyInThisPlaylist_ThrowsBadRequestException()
+        public async Task AddSongToPlaylistAsync_SongAlreadyInThisPlaylist_ReturnsBadRequestFailure()
         {
             // Arrange
             const string userId = "user-1";
@@ -216,11 +225,31 @@ namespace PlaylistManagement.UnitTests.Services
             var dto = new AddSongToPlaylistDto { SongId = 42 };
 
             // Act
-            var act = async () => await _sut.AddSongToPlaylistAsync(userId, 3, dto);
+            var result = await _sut.AddSongToPlaylistAsync(userId, 3, dto);
 
             // Assert
-            await act.Should().ThrowAsync<BadRequestException>();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.BadRequest);
             _playlistRepository.Verify(r => r.AddSongAsync(It.IsAny<PlaylistSong>()), Times.Never);
+        }
+
+        // Edge case: duplicate playlist name is rejected without throwing.
+        [Fact]
+        public async Task CreatePlaylistAsync_DuplicateName_ReturnsBadRequestFailure()
+        {
+            // Arrange
+            const string userId = "user-1";
+            var dto = new CreatePlaylistDto { Name = "Road Trip" };
+
+            _playlistRepository.Setup(r => r.ExistsByNameAsync(userId, dto.Name, null)).ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.CreatePlaylistAsync(userId, dto);
+
+            // Assert
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorType.Should().Be(ErrorType.BadRequest);
+            _playlistRepository.Verify(r => r.AddAsync(It.IsAny<Playlist>()), Times.Never);
         }
     }
 }

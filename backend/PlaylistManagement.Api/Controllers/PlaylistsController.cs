@@ -26,14 +26,19 @@ namespace PlaylistManagement.Api.Controllers
         /// <summary>Creates a new playlist owned by the current user.</summary>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreatePlaylistDto dto)
         {
-            var playlist = await _playlistService.CreatePlaylistAsync(CurrentUserId, dto);
+            var result = await _playlistService.CreatePlaylistAsync(CurrentUserId, dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = playlist.Id },
-                ApiResponse<PlaylistDto>.Ok(playlist, "Playlist created successfully."));
+                new { id = result.Value!.Id },
+                ApiResponse<PlaylistDto>.Ok(result.Value, "Playlist created successfully."));
         }
 
         /// <summary>Gets every playlist owned by the current user.</summary>
@@ -53,21 +58,30 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
-            var playlist = await _playlistService.GetPlaylistByIdAsync(CurrentUserId, id);
+            var result = await _playlistService.GetPlaylistByIdAsync(CurrentUserId, id);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
-            return Ok(ApiResponse<PlaylistDetailDto>.Ok(playlist));
+            return Ok(ApiResponse<PlaylistDetailDto>.Ok(result.Value!));
         }
 
         /// <summary>Updates a playlist's name/description.</summary>
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdatePlaylistDto dto)
         {
-            var playlist = await _playlistService.UpdatePlaylistAsync(CurrentUserId, id, dto);
+            var result = await _playlistService.UpdatePlaylistAsync(CurrentUserId, id, dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
-            return Ok(ApiResponse<PlaylistDto>.Ok(playlist, "Playlist updated successfully."));
+            return Ok(ApiResponse<PlaylistDto>.Ok(result.Value!, "Playlist updated successfully."));
         }
 
         /// <summary>Sets or replaces a playlist's cover image.</summary>
@@ -79,9 +93,13 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UploadCover(int id, [FromForm] UploadCoverImageDto dto)
         {
-            var playlist = await _playlistService.UploadCoverImageAsync(CurrentUserId, id, dto);
+            var result = await _playlistService.UploadCoverImageAsync(CurrentUserId, id, dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
-            return Ok(ApiResponse<PlaylistDto>.Ok(playlist, "Cover image updated successfully."));
+            return Ok(ApiResponse<PlaylistDto>.Ok(result.Value!, "Cover image updated successfully."));
         }
 
         /// <summary>Deletes a playlist owned by the current user.</summary>
@@ -91,7 +109,11 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            await _playlistService.DeletePlaylistAsync(CurrentUserId, id);
+            var result = await _playlistService.DeletePlaylistAsync(CurrentUserId, id);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return NoContent();
         }
@@ -104,7 +126,11 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddSong(int id, [FromBody] AddSongToPlaylistDto dto)
         {
-            await _playlistService.AddSongToPlaylistAsync(CurrentUserId, id, dto);
+            var result = await _playlistService.AddSongToPlaylistAsync(CurrentUserId, id, dto);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return Ok(ApiResponse.Ok("Song added to playlist successfully."));
         }
@@ -116,7 +142,11 @@ namespace PlaylistManagement.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoveSong(int id, int songId)
         {
-            await _playlistService.RemoveSongFromPlaylistAsync(CurrentUserId, id, songId);
+            var result = await _playlistService.RemoveSongFromPlaylistAsync(CurrentUserId, id, songId);
+            if (!result.IsSuccess)
+            {
+                return FromError(result.ErrorType, result.ErrorMessage!);
+            }
 
             return Ok(ApiResponse.Ok("Song removed from playlist successfully."));
         }

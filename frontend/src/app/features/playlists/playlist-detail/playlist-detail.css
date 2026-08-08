@@ -5,6 +5,14 @@
   padding: 1rem 0;
 }
 
+.detail-cover-img {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-lg);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .back-link {
   color: var(--text-muted);
   font-size: 0.85rem;
